@@ -4,7 +4,11 @@
 #include <vector>
 #include <string>
 
+#include "Dependencies/imgui/imgui.h"
+#include "Dependencies/mumble/Mumble.h"
+
 AddonAPI* g_api = nullptr;
+NexusLinkData* NexusLink = nullptr;
 
 struct {
     bool enabled = false;
@@ -13,8 +17,13 @@ struct {
     bool isQuickDps = false;
     bool isAlacDps = false;
     bool isChronomancer = false;
+    bool isMediumHitbox = false;
     bool debugMode = false;
+    bool showUI = false;
+    bool useCustomDelays = false;
     int debugCounter = 0;
+
+    int stepDelay = 290;
 } g_state;
 
 struct MenuCoordinates {
@@ -39,14 +48,176 @@ struct MenuCoordinates {
     };
 } g_coords;
 
+void GetScaledCoordinates(int baseX, int baseY, int* scaledX, int* scaledY);
+void DebugMousePosition();
+void ApplyAllBoons();
+void ApplyGolemSettings();
+void ClickAtScaled(int baseX, int baseY, int delay);
+bool ShouldSkipBoonStep(int stepIndex);
+bool ShouldSkipGolemStep(int stepIndex);
+void HandleBoonKeybind(const char* id, bool release);
+void HandleGolemKeybind(const char* id, bool release);
+void HandleToggleKeybind(const char* id, bool release);
+void HandleUIToggleKeybind(const char* id, bool release);
+void HandleDebugKeybind(const char* id, bool release);
+void HandleQuickDpsKeybind(const char* id, bool release);
+void HandleAlacDpsKeybind(const char* id, bool release);
+void HandleChronomancerKeybind(const char* id, bool release);
+void HandleMediumHitboxKeybind(const char* id, bool release);
+void Load(AddonAPI* aApi);
+void Unload();
+
+void RenderUI() {
+    if (!g_state.showUI) return;
+
+    ImGui::SetNextWindowSize(ImVec2(400, 500), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowPos(ImVec2(50, 50), ImGuiCond_FirstUseEver);
+
+    if (ImGui::Begin("GolemHelper Control Panel", &g_state.showUI, ImGuiWindowFlags_AlwaysAutoResize)) {
+
+        ImGui::TextColored(ImVec4(0.2f, 0.8f, 1.0f, 1.0f), "GolemHelper v1.0.0-beta.3");
+        ImGui::Separator();
+
+        ImGui::Text("Status:");
+        ImGui::SameLine();
+        if (g_state.enabled) {
+            ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "ENABLED");
+        }
+        else {
+            ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "DISABLED");
+        }
+
+        if (ImGui::Button(g_state.enabled ? "Disable GolemHelper" : "Enable GolemHelper", ImVec2(200, 0))) {
+            g_state.enabled = !g_state.enabled;
+        }
+
+        ImGui::Spacing();
+        ImGui::Separator();
+
+        ImGui::Text("Boon Configuration");
+        ImGui::Checkbox("Enable Boons", &g_state.boonsEnabled);
+
+        if (ImGui::Button("Apply Boons", ImVec2(150, 0))) {
+            if (g_state.enabled) {
+                g_api->InputBinds.Invoke("GolemHelper.ApplyBoons", false);
+            }
+        }
+
+        ImGui::Text("DPS Modes:");
+
+        if (ImGui::RadioButton("Normal Mode", !g_state.isQuickDps && !g_state.isAlacDps)) {
+            g_state.isQuickDps = false;
+            g_state.isAlacDps = false;
+        }
+
+        if (ImGui::RadioButton("Quick DPS (Skip Quickness)", g_state.isQuickDps)) {
+            g_state.isQuickDps = true;
+            g_state.isAlacDps = false;
+        }
+
+        if (ImGui::RadioButton("Alac DPS (Skip Alacrity)", g_state.isAlacDps)) {
+            g_state.isQuickDps = false;
+            g_state.isAlacDps = true;
+        }
+
+        ImGui::Spacing();
+        ImGui::Separator();
+
+        ImGui::Text("Golem Configuration");
+        ImGui::Checkbox("Enable Golem Settings", &g_state.golemEnabled);
+
+        if (ImGui::Button("Apply Golem Settings", ImVec2(150, 0))) {
+            if (g_state.enabled) {
+                g_api->InputBinds.Invoke("GolemHelper.ApplyGolem", false);
+            }
+        }
+
+        ImGui::Checkbox("Medium Hitbox (Default is Small)", &g_state.isMediumHitbox);
+
+        ImGui::Checkbox("Chronomancer Mode (Skip Slow)", &g_state.isChronomancer);
+
+        ImGui::Spacing();
+        ImGui::Separator();
+
+        ImGui::Text("Settings");
+
+        if (ImGui::Button("Configure Hotkeys", ImVec2(150, 0))) {
+        }
+
+        if (g_state.debugMode) {
+            ImGui::Spacing();
+            ImGui::Separator();
+            ImGui::Text("Display Info:");
+            if (NexusLink && NexusLink->Width > 0 && NexusLink->Height > 0) {
+                ImGui::Text("Resolution: %dx%d", NexusLink->Width, NexusLink->Height);
+                ImGui::Text("UI Scale: %.2f", NexusLink->Scaling);
+                float dpiScale = (float)NexusLink->Width / 1920.0f;
+                ImGui::Text("DPI Scale: %.3f", dpiScale);
+                ImGui::Text("Debug samples: %d", g_state.debugCounter);
+            }
+        }
+
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Text("Timing Settings");
+
+        bool wasUsingCustom = g_state.useCustomDelays;
+        ImGui::Checkbox("Use Custom Step Delay", &g_state.useCustomDelays);
+
+        if (g_state.useCustomDelays) {
+            ImGui::SliderInt("", &g_state.stepDelay, 100, 1000, "%d ms");
+
+            ImGui::Spacing();
+            if (ImGui::Button("Reset to Default", ImVec2(120, 0))) {
+                g_state.stepDelay = 290;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Slow Mode", ImVec2(80, 0))) {
+                g_state.stepDelay = 1000;
+            }
+
+            if (!wasUsingCustom) {
+                ImGui::Spacing();
+                ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.2f, 1.0f), "Increase delay if clicks fail");
+            }
+        }
+    }
+
+    ImGui::End();
+}
+
+void RenderOptions() {
+    ImGui::Separator();
+    ImGui::Text("GolemHelper Settings");
+
+    ImGui::Checkbox("Show UI by default", &g_state.showUI);
+    ImGui::Checkbox("Enable debug mode", &g_state.debugMode);
+
+    if (ImGui::Button("Reset all settings")) {
+        g_state.isQuickDps = false;
+        g_state.isAlacDps = false;
+        g_state.isChronomancer = false;
+        g_state.isMediumHitbox = false;
+        g_state.useCustomDelays = false;
+        g_state.stepDelay = 290;
+        g_state.boonsEnabled = true;
+        g_state.golemEnabled = true;
+    }
+
+    ImGui::Spacing();
+    ImGui::Text("Current Modes:");
+    ImGui::Text("- Boons: %s", g_state.isQuickDps ? "Quick DPS" : g_state.isAlacDps ? "Alac DPS" : "Normal");
+    ImGui::Text("- Golem: %s", g_state.isChronomancer ? "Chronomancer" : "Normal");
+    ImGui::Text("- Hitbox: %s", g_state.isMediumHitbox ? "Medium" : "Small");
+    ImGui::Text("- Timing: %s", g_state.useCustomDelays ? "Custom" : "Default");
+}
+
 void GetScaledCoordinates(int baseX, int baseY, int* scaledX, int* scaledY) {
     g_api->Log(ELogLevel_INFO, "GolemHelper", "GetScaledCoordinates CHIAMATA");
 
-    NexusLinkData* nexusData = (NexusLinkData*)g_api->DataLink.Get("DL_NEXUS_LINK");
-
-    if (nexusData && nexusData->Width > 0 && nexusData->Height > 0) {
-        float uiScale = nexusData->Scaling;
-        float dpiScale = (float)nexusData->Width / 1920.0f;
+    if (NexusLink && NexusLink->Width > 0 && NexusLink->Height > 0) {
+        float uiScale = NexusLink->Scaling;
+        float dpiScale = (float)NexusLink->Width / 1920.0f;
 
         char valuesBuffer[200];
         sprintf_s(valuesBuffer, "GetScaled INPUT: uiScale=%.3f, base=%d,%d", uiScale, baseX, baseY);
@@ -103,11 +274,9 @@ void DebugMousePosition() {
     POINT mousePos;
     GetCursorPos(&mousePos);
 
-    NexusLinkData* nexusData = (NexusLinkData*)g_api->DataLink.Get("DL_NEXUS_LINK");
-
-    if (nexusData && nexusData->Width > 0 && nexusData->Height > 0) {
-        float uiScale = nexusData->Scaling;
-        float dpiScale = (float)nexusData->Width / 1920.0f;
+    if (NexusLink && NexusLink->Width > 0 && NexusLink->Height > 0) {
+        float uiScale = NexusLink->Scaling;
+        float dpiScale = (float)NexusLink->Width / 1920.0f;
         float finalScaleX = uiScale * dpiScale;
 
         int baseX = (int)(mousePos.x / finalScaleX);
@@ -117,7 +286,7 @@ void DebugMousePosition() {
 
         char buffer[450];
         sprintf_s(buffer, "=== DEBUG #%d === Resolution: %dx%d | Mouse: %d,%d | Base coords: %d,%d | Interface Size: %.2f | DPI Scale: %.3f | Final ScaleX: %.3f",
-            g_state.debugCounter, nexusData->Width, nexusData->Height,
+            g_state.debugCounter, NexusLink->Width, NexusLink->Height,
             mousePos.x, mousePos.y, baseX, baseY, uiScale, dpiScale, finalScaleX);
         g_api->Log(ELogLevel_INFO, "GolemHelper", buffer);
     }
@@ -126,7 +295,6 @@ void DebugMousePosition() {
     }
 
     if (g_state.debugCounter == 1) {
-        g_api->UI.SendAlert("Debug active - Interface Size + DPI scaling");
     }
 }
 
@@ -167,31 +335,9 @@ bool ShouldSkipGolemStep(int stepIndex) {
 void ApplyAllBoons() {
     if (!g_api || !g_state.boonsEnabled || !g_state.enabled) return;
 
-    NexusLinkData* nexusData = (NexusLinkData*)g_api->DataLink.Get("DL_NEXUS_LINK");
-    if (nexusData && nexusData->Width > 0 && nexusData->Height > 0) {
-        float uiScale = nexusData->Scaling;
-        float dpiScale = (float)nexusData->Width / 1920.0f;
-        float finalScaleX = dpiScale;
-
-        char scalingBuffer[300];
-        sprintf_s(scalingBuffer, "Current scaling - Resolution: %dx%d | Interface Size: %.3f | DPI Scale: %.3f | Final ScaleX: %.3f",
-            nexusData->Width, nexusData->Height, uiScale, dpiScale, finalScaleX);
-        g_api->Log(ELogLevel_INFO, "GolemHelper", scalingBuffer);
-
-        if (uiScale >= 0.89f && uiScale <= 0.91f) {
-            g_api->Log(ELogLevel_INFO, "GolemHelper", "Applying SMALL interface offset");
-        }
-        else if (uiScale >= 1.09f && uiScale <= 1.15f) {
-            g_api->Log(ELogLevel_INFO, "GolemHelper", "Applying LARGE interface offset");
-        }
-        else if (uiScale >= 1.21f && uiScale <= 1.25f) {
-            g_api->Log(ELogLevel_INFO, "GolemHelper", "Applying LARGER interface offset");
-        }
-        else {
-            char noOffsetBuffer[150];
-            sprintf_s(noOffsetBuffer, "NO OFFSET applied - uiScale %.3f doesn't match any range", uiScale);
-            g_api->Log(ELogLevel_INFO, "GolemHelper", noOffsetBuffer);
-        }
+    bool uiWasVisible = g_state.showUI;
+    if (uiWasVisible) {
+        g_state.showUI = false;
     }
 
     const char* mode = g_state.isQuickDps ? "Quick DPS" :
@@ -203,41 +349,29 @@ void ApplyAllBoons() {
 
     try {
         g_api->GameBinds.InvokeAsync(EGameBinds_MiscInteract, 50);
-        Sleep(390);
+        int initialDelay = g_state.useCustomDelays ? g_state.stepDelay : 390;
+        Sleep(initialDelay);
 
         for (int i = 0; i < 20; i++) {
             if (g_coords.boonStepX[i] == 0 && g_coords.boonStepY[i] == 0) {
-                char skipBuffer[100];
-                sprintf_s(skipBuffer, "Skipping boon step %d (coordinates 0,0)", i + 1);
-                g_api->Log(ELogLevel_INFO, "GolemHelper", skipBuffer);
                 continue;
             }
 
             if (ShouldSkipBoonStep(i)) {
-                char skipBuffer[150];
-                sprintf_s(skipBuffer, "Skipping boon step %d (%s mode) - coordinates: %d,%d",
-                    i + 1, mode, g_coords.boonStepX[i], g_coords.boonStepY[i]);
-                g_api->Log(ELogLevel_INFO, "GolemHelper", skipBuffer);
                 continue;
             }
 
-            char stepBuffer[200];
-            sprintf_s(stepBuffer, "Executing boon step %d at base coordinates: %d,%d",
-                i + 1, g_coords.boonStepX[i], g_coords.boonStepY[i]);
-            g_api->Log(ELogLevel_INFO, "GolemHelper", stepBuffer);
+            int delay = (i == 19) ? 50 : (g_state.useCustomDelays ? g_state.stepDelay : 290);
 
-            int scaledX, scaledY;
-            GetScaledCoordinates(g_coords.boonStepX[i], g_coords.boonStepY[i], &scaledX, &scaledY);
-            char scaledBuffer[200];
-            sprintf_s(scaledBuffer, "-> FINAL SCALED COORDINATES: %d,%d", scaledX, scaledY);
-            g_api->Log(ELogLevel_INFO, "GolemHelper", scaledBuffer);
-
-            int delay = (i == 19) ? 50 : 290;
             ClickAtScaled(g_coords.boonStepX[i], g_coords.boonStepY[i], delay);
         }
     }
     catch (...) {
         g_api->Log(ELogLevel_WARNING, "GolemHelper", "Exception during boon sequence");
+    }
+
+    if (uiWasVisible) {
+        g_state.showUI = true;
     }
 
     g_api->Log(ELogLevel_INFO, "GolemHelper", "Boon sequence completed!");
@@ -246,71 +380,76 @@ void ApplyAllBoons() {
 void ApplyGolemSettings() {
     if (!g_api || !g_state.golemEnabled || !g_state.enabled) return;
 
-    NexusLinkData* nexusData = (NexusLinkData*)g_api->DataLink.Get("DL_NEXUS_LINK");
-    if (nexusData && nexusData->Width > 0 && nexusData->Height > 0) {
-        float uiScale = nexusData->Scaling;
-        float dpiScale = (float)nexusData->Width / 1920.0f;
-        float finalScaleX = dpiScale;
-
-        char scalingBuffer[300];
-        sprintf_s(scalingBuffer, "Current scaling - Resolution: %dx%d | Interface Size: %.3f | DPI Scale: %.3f | Final ScaleX: %.3f",
-            nexusData->Width, nexusData->Height, uiScale, dpiScale, finalScaleX);
-        g_api->Log(ELogLevel_INFO, "GolemHelper", scalingBuffer);
+    bool uiWasVisible = g_state.showUI;
+    if (uiWasVisible) {
+        g_state.showUI = false;
     }
 
     const char* mode = g_state.isChronomancer ? "Chronomancer" : "Normal";
-    char startBuffer[200];
-    sprintf_s(startBuffer, "Starting golem settings sequence (25 steps) - Mode: %s", mode);
+    const char* hitbox = g_state.isMediumHitbox ? "Medium Hitbox" : "Small Hitbox";
+    char startBuffer[300];
+    sprintf_s(startBuffer, "Starting golem settings sequence (25 steps) - Mode: %s, Hitbox: %s", mode, hitbox);
     g_api->Log(ELogLevel_INFO, "GolemHelper", startBuffer);
 
     try {
         g_api->GameBinds.InvokeAsync(EGameBinds_MiscInteract, 50);
-        Sleep(390);
+        int initialDelay = g_state.useCustomDelays ? g_state.stepDelay : 390;
+        Sleep(initialDelay);
 
         for (int i = 0; i < 25; i++) {
             if (g_coords.golemStepX[i] == 0 && g_coords.golemStepY[i] == 0) {
-                char skipBuffer[100];
-                sprintf_s(skipBuffer, "Skipping golem step %d (coordinates 0,0)", i + 1);
-                g_api->Log(ELogLevel_INFO, "GolemHelper", skipBuffer);
                 continue;
             }
 
             if (ShouldSkipGolemStep(i)) {
-                char skipBuffer[150];
-                sprintf_s(skipBuffer, "Skipping golem step %d (%s mode) - coordinates: %d,%d",
-                    i + 1, mode, g_coords.golemStepX[i], g_coords.golemStepY[i]);
-                g_api->Log(ELogLevel_INFO, "GolemHelper", skipBuffer);
                 continue;
             }
 
-            char stepBuffer[150];
-            sprintf_s(stepBuffer, "Executing golem step %d at base coordinates: %d,%d",
-                i + 1, g_coords.golemStepX[i], g_coords.golemStepY[i]);
-            g_api->Log(ELogLevel_INFO, "GolemHelper", stepBuffer);
+            int currentX = g_coords.golemStepX[i];
+            int currentY = g_coords.golemStepY[i];
 
-            int delay = (i == 24) ? 50 : 290;
-            ClickAtScaled(g_coords.golemStepX[i], g_coords.golemStepY[i], delay);
+            if (g_state.isMediumHitbox && i == 1) {
+                currentY = 305;
+            }
+
+            int delay = (i == 24) ? 50 : (g_state.useCustomDelays ? g_state.stepDelay : 290);
+
+            ClickAtScaled(currentX, currentY, delay);
         }
     }
     catch (...) {
         g_api->Log(ELogLevel_WARNING, "GolemHelper", "Exception during golem settings sequence");
     }
 
+    if (uiWasVisible) {
+        g_state.showUI = true;
+    }
+
     g_api->Log(ELogLevel_INFO, "GolemHelper", "Golem settings sequence completed (25 steps)!");
 }
 
 void HandleBoonKeybind(const char* id, bool release) {
-    if (!release && g_state.enabled) ApplyAllBoons();
+    if (!release && g_state.enabled) {
+        ApplyAllBoons();
+    }
 }
 
 void HandleGolemKeybind(const char* id, bool release) {
-    if (!release && g_state.enabled) ApplyGolemSettings();
+    if (!release && g_state.enabled) {
+        ApplyGolemSettings();
+    }
 }
 
 void HandleToggleKeybind(const char* id, bool release) {
     if (!release) {
         g_state.enabled = !g_state.enabled;
         g_api->UI.SendAlert(g_state.enabled ? "GolemHelper enabled" : "GolemHelper disabled");
+    }
+}
+
+void HandleUIToggleKeybind(const char* id, bool release) {
+    if (!release) {
+        g_state.showUI = !g_state.showUI;
     }
 }
 
@@ -325,7 +464,6 @@ void HandleQuickDpsKeybind(const char* id, bool release) {
             g_state.isAlacDps = false;
         }
         g_api->UI.SendAlert(g_state.isQuickDps ? "Quick DPS mode enabled" : "Quick DPS mode disabled");
-        g_api->Log(ELogLevel_INFO, "GolemHelper", g_state.isQuickDps ? "Quick DPS enabled" : "Quick DPS disabled");
     }
 }
 
@@ -336,7 +474,6 @@ void HandleAlacDpsKeybind(const char* id, bool release) {
             g_state.isQuickDps = false;
         }
         g_api->UI.SendAlert(g_state.isAlacDps ? "Alac DPS mode enabled" : "Alac DPS mode disabled");
-        g_api->Log(ELogLevel_INFO, "GolemHelper", g_state.isAlacDps ? "Alac DPS enabled" : "Alac DPS disabled");
     }
 }
 
@@ -344,13 +481,28 @@ void HandleChronomancerKeybind(const char* id, bool release) {
     if (!release) {
         g_state.isChronomancer = !g_state.isChronomancer;
         g_api->UI.SendAlert(g_state.isChronomancer ? "Chronomancer mode enabled" : "Chronomancer mode disabled");
-        g_api->Log(ELogLevel_INFO, "GolemHelper", g_state.isChronomancer ? "Chronomancer enabled" : "Chronomancer disabled");
     }
 }
 
-void Load(AddonAPI* api) {
-    g_api = api;
+void HandleMediumHitboxKeybind(const char* id, bool release) {
+    if (!release) {
+        g_state.isMediumHitbox = !g_state.isMediumHitbox;
+        g_api->UI.SendAlert(g_state.isMediumHitbox ? "Medium Hitbox enabled" : "Medium Hitbox disabled");
+    }
+}
+
+void Load(AddonAPI* aApi) {
+    g_api = aApi;
+
+    ImGui::SetCurrentContext((ImGuiContext*)g_api->ImguiContext);
+    ImGui::SetAllocatorFunctions((void* (*)(size_t, void*))g_api->ImguiMalloc, (void(*)(void*, void*))g_api->ImguiFree);
+
+    NexusLink = (NexusLinkData*)g_api->DataLink.Get("DL_NEXUS_LINK");
+
     g_state.enabled = true;
+
+    g_api->Renderer.Register(ERenderType_Render, RenderUI);
+    g_api->Renderer.Register(ERenderType_OptionsRender, RenderOptions);
 
     Keybind kb_empty = { 0, false, false, false };
     g_api->InputBinds.RegisterWithStruct("GolemHelper.ApplyBoons", HandleBoonKeybind, kb_empty);
@@ -358,39 +510,34 @@ void Load(AddonAPI* api) {
     g_api->InputBinds.RegisterWithStruct("GolemHelper.QuickDPS", HandleQuickDpsKeybind, kb_empty);
     g_api->InputBinds.RegisterWithStruct("GolemHelper.AlacDPS", HandleAlacDpsKeybind, kb_empty);
     g_api->InputBinds.RegisterWithStruct("GolemHelper.Chronomancer", HandleChronomancerKeybind, kb_empty);
+    g_api->InputBinds.RegisterWithStruct("GolemHelper.MediumHitbox", HandleMediumHitboxKeybind, kb_empty);
     g_api->InputBinds.RegisterWithStruct("GolemHelper.Toggle", HandleToggleKeybind, kb_empty);
     g_api->InputBinds.RegisterWithStruct("GolemHelper.DebugMouse", HandleDebugKeybind, kb_empty);
+    g_api->InputBinds.RegisterWithStruct("GolemHelper.ToggleUI", HandleUIToggleKeybind, kb_empty);
 
-    g_api->Log(ELogLevel_INFO, "GolemHelper", "=== GolemHelper v1.0.0-beta.1 Loaded with Array System + DPS Modes + Chronomancer ===");
-    g_api->Log(ELogLevel_INFO, "GolemHelper", "Available keybinds:");
-    g_api->Log(ELogLevel_INFO, "GolemHelper", "Available keybinds:");
-    g_api->Log(ELogLevel_INFO, "GolemHelper", "- ApplyBoons: Apply boons with current DPS mode");
-    g_api->Log(ELogLevel_INFO, "GolemHelper", "- ApplyGolem: Apply golem settings");
-    g_api->Log(ELogLevel_INFO, "GolemHelper", "- QuickDPS: Toggle Quick DPS mode (skip quickness)");
-    g_api->Log(ELogLevel_INFO, "GolemHelper", "- AlacDPS: Toggle Alac DPS mode (skip alacrity)");
-    g_api->Log(ELogLevel_INFO, "GolemHelper", "- Chronomancer: Toggle Chronomancer mode (skip slow on golem)");
-    g_api->Log(ELogLevel_INFO, "GolemHelper", "- Toggle: Enable/disable addon");
-    g_api->Log(ELogLevel_INFO, "GolemHelper", "- DebugMouse: Show mouse position (for coordinate mapping)");
-
-    const char* boonMode = g_state.isQuickDps ? "Quick DPS" :
-        g_state.isAlacDps ? "Alac DPS" : "Normal";
-    const char* golemMode = g_state.isChronomancer ? "Chronomancer" : "Normal";
-
-    char modeBuffer[150];
-    sprintf_s(modeBuffer, "Current Modes - Boons: %s | Golem: %s | Base coordinates: 1080p", boonMode, golemMode);
-    g_api->Log(ELogLevel_INFO, "GolemHelper", modeBuffer);
+    g_api->Log(ELogLevel_INFO, "GolemHelper", "=== GolemHelper v1.0.0-beta.2 Loaded ===");
+    g_api->Log(ELogLevel_INFO, "GolemHelper", "<c=#00ff00>GolemHelper addon</c> loaded successfully!");
 }
 
 void Unload() {
-    g_api->InputBinds.Deregister("GolemHelper.ApplyBoons");
-    g_api->InputBinds.Deregister("GolemHelper.ApplyGolem");
-    g_api->InputBinds.Deregister("GolemHelper.QuickDPS");
-    g_api->InputBinds.Deregister("GolemHelper.AlacDPS");
-    g_api->InputBinds.Deregister("GolemHelper.Chronomancer");
-    g_api->InputBinds.Deregister("GolemHelper.Toggle");
-    g_api->InputBinds.Deregister("GolemHelper.DebugMouse");
+    if (g_api) {
+        g_api->Renderer.Deregister(RenderUI);
+        g_api->Renderer.Deregister(RenderOptions);
+        g_api->InputBinds.Deregister("GolemHelper.ApplyBoons");
+        g_api->InputBinds.Deregister("GolemHelper.ApplyGolem");
+        g_api->InputBinds.Deregister("GolemHelper.QuickDPS");
+        g_api->InputBinds.Deregister("GolemHelper.AlacDPS");
+        g_api->InputBinds.Deregister("GolemHelper.Chronomancer");
+        g_api->InputBinds.Deregister("GolemHelper.MediumHitbox");
+        g_api->InputBinds.Deregister("GolemHelper.Toggle");
+        g_api->InputBinds.Deregister("GolemHelper.DebugMouse");
+        g_api->InputBinds.Deregister("GolemHelper.ToggleUI");
+    }
+
+    g_api->Log(ELogLevel_INFO, "GolemHelper", "<c=#ff0000>GolemHelper signing off</c>, it was an honor commander.");
     g_api = nullptr;
     g_state.enabled = false;
+    g_state.showUI = false;
 }
 
 extern "C" __declspec(dllexport) AddonDefinition* GetAddonDef() {
@@ -398,9 +545,9 @@ extern "C" __declspec(dllexport) AddonDefinition* GetAddonDef() {
     def.Signature = -424248;
     def.APIVersion = NEXUS_API_VERSION;
     def.Name = "GolemHelper";
-    def.Version = { 1, 0, 0, 1 };
+    def.Version = { 1, 0, 0, 2 };
     def.Author = "Azrub";
-    def.Description = "Boon & golem automation with DPS modes, Chronomancer mode and auto-scaling [BETA]";
+    def.Description = "Automatically applies boons and configures golems in the training area";
     def.Load = Load;
     def.Unload = Unload;
     def.Flags = EAddonFlags_None;
@@ -409,4 +556,6 @@ extern "C" __declspec(dllexport) AddonDefinition* GetAddonDef() {
     return &def;
 }
 
-BOOL APIENTRY DllMain(HMODULE, DWORD, LPVOID) { return TRUE; }
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
+    return TRUE;
+}
