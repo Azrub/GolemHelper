@@ -88,9 +88,9 @@ void RenderUI() {
     ImGui::SetNextWindowSize(ImVec2(400, 500), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowPos(ImVec2(50, 50), ImGuiCond_FirstUseEver);
 
-    if (ImGui::Begin("GolemHelper Control Panel", &g_state.showUI, ImGuiWindowFlags_AlwaysAutoResize)) {
+    if (ImGui::Begin("GolemHelper", &g_state.showUI, ImGuiWindowFlags_AlwaysAutoResize)) {
 
-        ImGui::TextColored(ImVec4(0.2f, 0.8f, 1.0f, 1.0f), "GolemHelper v1.0.0-beta.3");
+        ImGui::TextColored(ImVec4(0.2f, 0.8f, 1.0f, 1.0f), "GolemHelper v1.0.0.0");
         ImGui::Separator();
 
         ImGui::Text("Status:");
@@ -658,7 +658,7 @@ void Load(AddonAPI* aApi) {
     g_api->InputBinds.RegisterWithStruct("GolemHelper.ToggleUI", HandleUIToggleKeybind, kb_empty);
     g_api->InputBinds.RegisterWithStruct("GolemHelper.DebugMouse", HandleDebugKeybind, kb_empty);
 
-    g_api->Log(ELogLevel_INFO, "GolemHelper", "=== GolemHelper v1.0.0-beta.3 Loaded ===");
+    g_api->Log(ELogLevel_INFO, "GolemHelper", "=== GolemHelper v1.0.0.0 Loaded ===");
     g_api->Log(ELogLevel_INFO, "GolemHelper", "<c=#00ff00>GolemHelper addon</c> loaded successfully!");
 }
 
@@ -686,7 +686,7 @@ extern "C" __declspec(dllexport) AddonDefinition* GetAddonDef() {
     def.Signature = -424248;
     def.APIVersion = NEXUS_API_VERSION;
     def.Name = "GolemHelper";
-    def.Version = { 1, 0, 0, 3 };
+    def.Version = { 1, 0, 0, 0 };
     def.Author = "Azrub";
     def.Description = "Automatically applies boons and golem settings in the training area";
     def.Load = Load;
