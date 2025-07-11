@@ -10,17 +10,34 @@
 AddonAPI* g_api = nullptr;
 NexusLinkData* NexusLink = nullptr;
 
+enum HitboxType {
+    HITBOX_SMALL = 0,
+    HITBOX_MEDIUM = 1,
+    HITBOX_BIG = 2
+};
+
+enum EnvironmentDamageLevel {
+    ENV_MILD = 0,
+    ENV_MODERATE = 1,
+    ENV_EXTREME = 2
+};
+
 struct {
     bool enabled = false;
     bool boonsEnabled = true;
     bool golemEnabled = true;
     bool isQuickDps = false;
     bool isAlacDps = false;
-    bool isChronomancer = false;
-    bool isMediumHitbox = false;
+    bool environmentDamage = false;
+    EnvironmentDamageLevel envDamageLevel = ENV_MILD;
+    bool skipSlow = false;
+    bool skipBurning = false;
+    bool fiveBleedingStacks = false;
+    HitboxType hitboxType = HITBOX_SMALL;
     bool debugMode = false;
     bool showUI = false;
     bool useCustomDelays = false;
+    bool showAdvanced = false;
     int debugCounter = 0;
 
     int stepDelay = 290;
@@ -57,13 +74,11 @@ bool ShouldSkipBoonStep(int stepIndex);
 bool ShouldSkipGolemStep(int stepIndex);
 void HandleBoonKeybind(const char* id, bool release);
 void HandleGolemKeybind(const char* id, bool release);
+void HandleQuickDpsKeybind(const char* id, bool release);
+void HandleAlacDpsKeybind(const char* id, bool release);
 void HandleToggleKeybind(const char* id, bool release);
 void HandleUIToggleKeybind(const char* id, bool release);
 void HandleDebugKeybind(const char* id, bool release);
-void HandleQuickDpsKeybind(const char* id, bool release);
-void HandleAlacDpsKeybind(const char* id, bool release);
-void HandleChronomancerKeybind(const char* id, bool release);
-void HandleMediumHitboxKeybind(const char* id, bool release);
 void Load(AddonAPI* aApi);
 void Unload();
 
@@ -75,7 +90,7 @@ void RenderUI() {
 
     if (ImGui::Begin("GolemHelper Control Panel", &g_state.showUI, ImGuiWindowFlags_AlwaysAutoResize)) {
 
-        ImGui::TextColored(ImVec4(0.2f, 0.8f, 1.0f, 1.0f), "GolemHelper v1.0.0-beta.2");
+        ImGui::TextColored(ImVec4(0.2f, 0.8f, 1.0f, 1.0f), "GolemHelper v1.0.0-beta.3");
         ImGui::Separator();
 
         ImGui::Text("Status:");
@@ -121,6 +136,25 @@ void RenderUI() {
         }
 
         ImGui::Spacing();
+        ImGui::Text("Healer Bench:");
+
+        ImGui::Checkbox("Environment Damage", &g_state.environmentDamage);
+
+        if (g_state.environmentDamage) {
+            if (ImGui::RadioButton("Mild", g_state.envDamageLevel == ENV_MILD)) {
+                g_state.envDamageLevel = ENV_MILD;
+            }
+
+            if (ImGui::RadioButton("Moderate", g_state.envDamageLevel == ENV_MODERATE)) {
+                g_state.envDamageLevel = ENV_MODERATE;
+            }
+
+            if (ImGui::RadioButton("Extreme", g_state.envDamageLevel == ENV_EXTREME)) {
+                g_state.envDamageLevel = ENV_EXTREME;
+            }
+        }
+
+        ImGui::Spacing();
         ImGui::Separator();
 
         ImGui::Text("Golem Configuration");
@@ -132,16 +166,29 @@ void RenderUI() {
             }
         }
 
-        ImGui::Checkbox("Medium Hitbox (Default is Small)", &g_state.isMediumHitbox);
+        ImGui::Text("Golem Hitbox:");
 
-        ImGui::Checkbox("Chronomancer Mode (Skip Slow)", &g_state.isChronomancer);
+        if (ImGui::RadioButton("Small (Benchmark Default)", g_state.hitboxType == HITBOX_SMALL)) {
+            g_state.hitboxType = HITBOX_SMALL;
+        }
+
+        if (ImGui::RadioButton("Medium", g_state.hitboxType == HITBOX_MEDIUM)) {
+            g_state.hitboxType = HITBOX_MEDIUM;
+        }
+
+        if (ImGui::RadioButton("Big", g_state.hitboxType == HITBOX_BIG)) {
+            g_state.hitboxType = HITBOX_BIG;
+        }
 
         ImGui::Spacing();
-        ImGui::Separator();
+        ImGui::Text("Advanced:");
 
-        ImGui::Text("Settings");
+        ImGui::Checkbox("Condition Settings", &g_state.showAdvanced);
 
-        if (ImGui::Button("Configure Hotkeys", ImVec2(150, 0))) {
+        if (g_state.showAdvanced) {
+            ImGui::Checkbox("Skip Slow", &g_state.skipSlow);
+            ImGui::Checkbox("Skip Burning", &g_state.skipBurning);
+            ImGui::Checkbox("5 Bleeding Stacks", &g_state.fiveBleedingStacks);
         }
 
         if (g_state.debugMode) {
@@ -196,9 +243,14 @@ void RenderOptions() {
     if (ImGui::Button("Reset all settings")) {
         g_state.isQuickDps = false;
         g_state.isAlacDps = false;
-        g_state.isChronomancer = false;
-        g_state.isMediumHitbox = false;
+        g_state.environmentDamage = false;
+        g_state.envDamageLevel = ENV_MILD;
+        g_state.skipSlow = false;
+        g_state.skipBurning = false;
+        g_state.fiveBleedingStacks = false;
+        g_state.hitboxType = HITBOX_SMALL;
         g_state.useCustomDelays = false;
+        g_state.showAdvanced = false;
         g_state.stepDelay = 290;
         g_state.boonsEnabled = true;
         g_state.golemEnabled = true;
@@ -206,9 +258,40 @@ void RenderOptions() {
 
     ImGui::Spacing();
     ImGui::Text("Current Modes:");
-    ImGui::Text("- Boons: %s", g_state.isQuickDps ? "Quick DPS" : g_state.isAlacDps ? "Alac DPS" : "Normal");
-    ImGui::Text("- Golem: %s", g_state.isChronomancer ? "Chronomancer" : "Normal");
-    ImGui::Text("- Hitbox: %s", g_state.isMediumHitbox ? "Medium" : "Small");
+
+    std::string boonMode = "Normal";
+    if (g_state.isQuickDps) {
+        boonMode = "Quick DPS";
+    }
+    else if (g_state.isAlacDps) {
+        boonMode = "Alac DPS";
+    }
+
+    if (g_state.environmentDamage) {
+        boonMode += " + Env ";
+        switch (g_state.envDamageLevel) {
+        case ENV_MILD: boonMode += "Mild"; break;
+        case ENV_MODERATE: boonMode += "Moderate"; break;
+        case ENV_EXTREME: boonMode += "Extreme"; break;
+        }
+    }
+
+    ImGui::Text("- Boons: %s", boonMode.c_str());
+
+    std::string golemMods = "Normal";
+    if (g_state.showAdvanced && (g_state.skipSlow || g_state.skipBurning || g_state.fiveBleedingStacks)) {
+        golemMods = "";
+        if (g_state.skipSlow) golemMods += "Skip Slow ";
+        if (g_state.skipBurning) golemMods += "Skip Burning ";
+        if (g_state.fiveBleedingStacks) golemMods += "5 Bleeding ";
+        if (!golemMods.empty()) golemMods.pop_back();
+    }
+    ImGui::Text("- Golem: %s", golemMods.c_str());
+
+    const char* hitboxName = g_state.hitboxType == HITBOX_SMALL ? "Small" :
+        g_state.hitboxType == HITBOX_MEDIUM ? "Medium" : "Big";
+    ImGui::Text("- Hitbox: %s", hitboxName);
+
     ImGui::Text("- Timing: %s", g_state.useCustomDelays ? "Custom" : "Default");
 }
 
@@ -325,7 +408,15 @@ bool ShouldSkipBoonStep(int stepIndex) {
 }
 
 bool ShouldSkipGolemStep(int stepIndex) {
-    if (g_state.isChronomancer && stepIndex == 17) {
+    if (!g_state.showAdvanced) {
+        return false;
+    }
+
+    if (g_state.skipSlow && stepIndex == 17) {
+        return true;
+    }
+
+    if (g_state.skipBurning && stepIndex == 7) {
         return true;
     }
 
@@ -340,11 +431,25 @@ void ApplyAllBoons() {
         g_state.showUI = false;
     }
 
-    const char* mode = g_state.isQuickDps ? "Quick DPS" :
-        g_state.isAlacDps ? "Alac DPS" : "Normal";
+    std::string mode = "Normal";
+    if (g_state.isQuickDps) {
+        mode = "Quick DPS";
+    }
+    else if (g_state.isAlacDps) {
+        mode = "Alac DPS";
+    }
 
-    char startBuffer[200];
-    sprintf_s(startBuffer, "Starting boon sequence (20 steps) - Mode: %s", mode);
+    if (g_state.environmentDamage) {
+        mode += " + Environment ";
+        switch (g_state.envDamageLevel) {
+        case ENV_MILD: mode += "Mild"; break;
+        case ENV_MODERATE: mode += "Moderate"; break;
+        case ENV_EXTREME: mode += "Extreme"; break;
+        }
+    }
+
+    char startBuffer[300];
+    sprintf_s(startBuffer, "Starting boon sequence (20 steps) - Mode: %s", mode.c_str());
     g_api->Log(ELogLevel_INFO, "GolemHelper", startBuffer);
 
     try {
@@ -352,7 +457,9 @@ void ApplyAllBoons() {
         int initialDelay = g_state.useCustomDelays ? g_state.stepDelay : 390;
         Sleep(initialDelay);
 
-        for (int i = 0; i < 20; i++) {
+        int maxSteps = g_state.environmentDamage ? 19 : 20;
+
+        for (int i = 0; i < maxSteps; i++) {
             if (g_coords.boonStepX[i] == 0 && g_coords.boonStepY[i] == 0) {
                 continue;
             }
@@ -361,9 +468,32 @@ void ApplyAllBoons() {
                 continue;
             }
 
-            int delay = (i == 19) ? 50 : (g_state.useCustomDelays ? g_state.stepDelay : 290);
+            int delay = (i == maxSteps - 1) ? 50 : (g_state.useCustomDelays ? g_state.stepDelay : 290);
 
             ClickAtScaled(g_coords.boonStepX[i], g_coords.boonStepY[i], delay);
+        }
+
+        if (g_state.environmentDamage) {
+            g_api->Log(ELogLevel_INFO, "GolemHelper", "Applying Environment Damage sequence");
+
+            int delay = g_state.useCustomDelays ? g_state.stepDelay : 290;
+
+            Sleep(delay);
+            ClickAtScaled(830, 500, delay);
+            ClickAtScaled(830, 454, delay);
+            ClickAtScaled(830, 454, delay);
+            ClickAtScaled(830, 306, delay);
+            ClickAtScaled(830, 257, delay);
+
+            int finalY;
+            switch (g_state.envDamageLevel) {
+            case ENV_MILD: finalY = 352; break;
+            case ENV_MODERATE: finalY = 306; break;
+            case ENV_EXTREME: finalY = 257; break;
+            default: finalY = 352; break;
+            }
+
+            ClickAtScaled(830, finalY, 50);
         }
     }
     catch (...) {
@@ -385,10 +515,20 @@ void ApplyGolemSettings() {
         g_state.showUI = false;
     }
 
-    const char* mode = g_state.isChronomancer ? "Chronomancer" : "Normal";
-    const char* hitbox = g_state.isMediumHitbox ? "Medium Hitbox" : "Small Hitbox";
-    char startBuffer[300];
-    sprintf_s(startBuffer, "Starting golem settings sequence (25 steps) - Mode: %s, Hitbox: %s", mode, hitbox);
+    const char* hitbox = g_state.hitboxType == HITBOX_SMALL ? "Small Hitbox" :
+        g_state.hitboxType == HITBOX_MEDIUM ? "Medium Hitbox" : "Big Hitbox";
+
+    std::string modifiers = "Normal";
+    if (g_state.showAdvanced && (g_state.skipSlow || g_state.skipBurning || g_state.fiveBleedingStacks)) {
+        modifiers = "";
+        if (g_state.skipSlow) modifiers += "Skip Slow ";
+        if (g_state.skipBurning) modifiers += "Skip Burning ";
+        if (g_state.fiveBleedingStacks) modifiers += "5 Bleeding ";
+        if (!modifiers.empty()) modifiers.pop_back();
+    }
+
+    char startBuffer[400];
+    sprintf_s(startBuffer, "Starting golem settings sequence (25 steps) - Modifiers: %s, Hitbox: %s", modifiers.c_str(), hitbox);
     g_api->Log(ELogLevel_INFO, "GolemHelper", startBuffer);
 
     try {
@@ -408,13 +548,32 @@ void ApplyGolemSettings() {
             int currentX = g_coords.golemStepX[i];
             int currentY = g_coords.golemStepY[i];
 
-            if (g_state.isMediumHitbox && i == 1) {
-                currentY = 305;
+            if (i == 1) {
+                switch (g_state.hitboxType) {
+                case HITBOX_SMALL:
+                    currentY = 260;
+                    break;
+                case HITBOX_MEDIUM:
+                    currentY = 305;
+                    break;
+                case HITBOX_BIG:
+                    currentY = 352;
+                    break;
+                }
             }
 
             int delay = (i == 24) ? 50 : (g_state.useCustomDelays ? g_state.stepDelay : 290);
 
             ClickAtScaled(currentX, currentY, delay);
+
+            if (g_state.showAdvanced && g_state.fiveBleedingStacks && i == 6) {
+                g_api->Log(ELogLevel_INFO, "GolemHelper", "5 Bleeding Stacks - repeating 7th step 4 more times");
+
+                for (int repeat = 0; repeat < 4; repeat++) {
+                    int repeatDelay = g_state.useCustomDelays ? g_state.stepDelay : 290;
+                    ClickAtScaled(currentX, currentY, repeatDelay);
+                }
+            }
         }
     }
     catch (...) {
@@ -477,20 +636,6 @@ void HandleAlacDpsKeybind(const char* id, bool release) {
     }
 }
 
-void HandleChronomancerKeybind(const char* id, bool release) {
-    if (!release) {
-        g_state.isChronomancer = !g_state.isChronomancer;
-        g_api->UI.SendAlert(g_state.isChronomancer ? "Chronomancer mode enabled" : "Chronomancer mode disabled");
-    }
-}
-
-void HandleMediumHitboxKeybind(const char* id, bool release) {
-    if (!release) {
-        g_state.isMediumHitbox = !g_state.isMediumHitbox;
-        g_api->UI.SendAlert(g_state.isMediumHitbox ? "Medium Hitbox enabled" : "Medium Hitbox disabled");
-    }
-}
-
 void Load(AddonAPI* aApi) {
     g_api = aApi;
 
@@ -509,13 +654,11 @@ void Load(AddonAPI* aApi) {
     g_api->InputBinds.RegisterWithStruct("GolemHelper.ApplyGolem", HandleGolemKeybind, kb_empty);
     g_api->InputBinds.RegisterWithStruct("GolemHelper.QuickDPS", HandleQuickDpsKeybind, kb_empty);
     g_api->InputBinds.RegisterWithStruct("GolemHelper.AlacDPS", HandleAlacDpsKeybind, kb_empty);
-    g_api->InputBinds.RegisterWithStruct("GolemHelper.Chronomancer", HandleChronomancerKeybind, kb_empty);
-    g_api->InputBinds.RegisterWithStruct("GolemHelper.MediumHitbox", HandleMediumHitboxKeybind, kb_empty);
     g_api->InputBinds.RegisterWithStruct("GolemHelper.Toggle", HandleToggleKeybind, kb_empty);
-    g_api->InputBinds.RegisterWithStruct("GolemHelper.DebugMouse", HandleDebugKeybind, kb_empty);
     g_api->InputBinds.RegisterWithStruct("GolemHelper.ToggleUI", HandleUIToggleKeybind, kb_empty);
+    g_api->InputBinds.RegisterWithStruct("GolemHelper.DebugMouse", HandleDebugKeybind, kb_empty);
 
-    g_api->Log(ELogLevel_INFO, "GolemHelper", "=== GolemHelper v1.0.0-beta.2 Loaded ===");
+    g_api->Log(ELogLevel_INFO, "GolemHelper", "=== GolemHelper v1.0.0-beta.3 Loaded ===");
     g_api->Log(ELogLevel_INFO, "GolemHelper", "<c=#00ff00>GolemHelper addon</c> loaded successfully!");
 }
 
@@ -527,11 +670,9 @@ void Unload() {
         g_api->InputBinds.Deregister("GolemHelper.ApplyGolem");
         g_api->InputBinds.Deregister("GolemHelper.QuickDPS");
         g_api->InputBinds.Deregister("GolemHelper.AlacDPS");
-        g_api->InputBinds.Deregister("GolemHelper.Chronomancer");
-        g_api->InputBinds.Deregister("GolemHelper.MediumHitbox");
         g_api->InputBinds.Deregister("GolemHelper.Toggle");
-        g_api->InputBinds.Deregister("GolemHelper.DebugMouse");
         g_api->InputBinds.Deregister("GolemHelper.ToggleUI");
+        g_api->InputBinds.Deregister("GolemHelper.DebugMouse");
     }
 
     g_api->Log(ELogLevel_INFO, "GolemHelper", "<c=#ff0000>GolemHelper signing off</c>, it was an honor commander.");
@@ -545,9 +686,9 @@ extern "C" __declspec(dllexport) AddonDefinition* GetAddonDef() {
     def.Signature = -424248;
     def.APIVersion = NEXUS_API_VERSION;
     def.Name = "GolemHelper";
-    def.Version = { 1, 0, 0, 2 };
+    def.Version = { 1, 0, 0, 3 };
     def.Author = "Azrub";
-    def.Description = "Automatically applies boons and configures golems in the training area";
+    def.Description = "Automatically applies boons and golem settings in the training area";
     def.Load = Load;
     def.Unload = Unload;
     def.Flags = EAddonFlags_None;
