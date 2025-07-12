@@ -13,7 +13,7 @@ NexusLinkData* NexusLink = nullptr;
 enum HitboxType {
     HITBOX_SMALL = 0,
     HITBOX_MEDIUM = 1,
-    HITBOX_BIG = 2
+    HITBOX_LARGE = 2
 };
 
 enum EnvironmentDamageLevel {
@@ -63,11 +63,19 @@ struct MenuCoordinates {
         262, 354, 262, 262, 400, 305, 354, 305, 262, 305,
         450, 500, 354, 262, 305, 354, 400, 450, 262, 550
     };
+
+    int healerStepX[10] = {
+        830, 830, 830, 830, 830, 830, 830, 830, 830, 830
+    };
+    int healerStepY[10] = {
+        262, 352, 352, 262, 262, 500, 450, 450, 305, 262
+    };
 } g_coords;
 
 void GetScaledCoordinates(int baseX, int baseY, int* scaledX, int* scaledY);
 void DebugMousePosition();
 void ApplyAllBoons();
+void ApplyHealerBoons();
 void ApplyGolemSettings();
 void ClickAtScaled(int baseX, int baseY, int delay);
 bool ShouldSkipBoonStep(int stepIndex);
@@ -90,7 +98,7 @@ void RenderUI() {
 
     if (ImGui::Begin("GolemHelper", &g_state.showUI, ImGuiWindowFlags_AlwaysAutoResize)) {
 
-        ImGui::TextColored(ImVec4(0.2f, 0.8f, 1.0f, 1.0f), "GolemHelper v1.0.0.0");
+        ImGui::TextColored(ImVec4(0.2f, 0.8f, 1.0f, 1.0f), "GolemHelper v1.0.1.0");
         ImGui::Separator();
 
         ImGui::Text("Status:");
@@ -118,19 +126,26 @@ void RenderUI() {
             }
         }
 
-        ImGui::Text("DPS Modes:");
+        ImGui::Text(g_state.environmentDamage ? "Healer Modes:" : "DPS Modes:");
 
-        if (ImGui::RadioButton("Normal Mode", !g_state.isQuickDps && !g_state.isAlacDps)) {
-            g_state.isQuickDps = false;
-            g_state.isAlacDps = false;
+        if (g_state.environmentDamage) {
+            ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.6f);
+            ImGui::RadioButton("Normal Mode", false);
+            ImGui::PopStyleVar();
+        }
+        else {
+            if (ImGui::RadioButton("Normal Mode", !g_state.isQuickDps && !g_state.isAlacDps)) {
+                g_state.isQuickDps = false;
+                g_state.isAlacDps = false;
+            }
         }
 
-        if (ImGui::RadioButton("Quick DPS (Skip Quickness)", g_state.isQuickDps)) {
+        if (ImGui::RadioButton(g_state.environmentDamage ? "qHeal (Skip Quickness)" : "Quick DPS (Skip Quickness)", g_state.isQuickDps)) {
             g_state.isQuickDps = true;
             g_state.isAlacDps = false;
         }
 
-        if (ImGui::RadioButton("Alac DPS (Skip Alacrity)", g_state.isAlacDps)) {
+        if (ImGui::RadioButton(g_state.environmentDamage ? "aHeal (Skip Alacrity)" : "Alac DPS (Skip Alacrity)", g_state.isAlacDps)) {
             g_state.isQuickDps = false;
             g_state.isAlacDps = true;
         }
@@ -138,7 +153,14 @@ void RenderUI() {
         ImGui::Spacing();
         ImGui::Text("Healer Bench:");
 
+        bool wasEnvironmentDamage = g_state.environmentDamage;
         ImGui::Checkbox("Environment Damage", &g_state.environmentDamage);
+
+        if (g_state.environmentDamage && !wasEnvironmentDamage) {
+            if (!g_state.isQuickDps && !g_state.isAlacDps) {
+                g_state.isQuickDps = true;
+            }
+        }
 
         if (g_state.environmentDamage) {
             if (ImGui::RadioButton("Mild", g_state.envDamageLevel == ENV_MILD)) {
@@ -176,8 +198,8 @@ void RenderUI() {
             g_state.hitboxType = HITBOX_MEDIUM;
         }
 
-        if (ImGui::RadioButton("Big", g_state.hitboxType == HITBOX_BIG)) {
-            g_state.hitboxType = HITBOX_BIG;
+        if (ImGui::RadioButton("Large", g_state.hitboxType == HITBOX_LARGE)) {
+            g_state.hitboxType = HITBOX_LARGE;
         }
 
         ImGui::Spacing();
@@ -289,7 +311,7 @@ void RenderOptions() {
     ImGui::Text("- Golem: %s", golemMods.c_str());
 
     const char* hitboxName = g_state.hitboxType == HITBOX_SMALL ? "Small" :
-        g_state.hitboxType == HITBOX_MEDIUM ? "Medium" : "Big";
+        g_state.hitboxType == HITBOX_MEDIUM ? "Medium" : "Large";
     ImGui::Text("- Hitbox: %s", hitboxName);
 
     ImGui::Text("- Timing: %s", g_state.useCustomDelays ? "Custom" : "Default");
@@ -423,8 +445,82 @@ bool ShouldSkipGolemStep(int stepIndex) {
     return false;
 }
 
+void ApplyHealerBoons() {
+    if (!g_api || !g_state.boonsEnabled || !g_state.enabled) return;
+
+    bool uiWasVisible = g_state.showUI;
+    if (uiWasVisible) {
+        g_state.showUI = false;
+    }
+
+    std::string mode = "Healer Bench - ";
+    if (g_state.isQuickDps) {
+        mode += "Quick DPS (Healer provides Alacrity)";
+    }
+    else if (g_state.isAlacDps) {
+        mode += "Alac DPS (Healer provides Quickness)";
+    }
+
+    mode += " + Environment ";
+    switch (g_state.envDamageLevel) {
+    case ENV_MILD: mode += "Mild"; break;
+    case ENV_MODERATE: mode += "Moderate"; break;
+    case ENV_EXTREME: mode += "Extreme"; break;
+    }
+
+    char startBuffer[400];
+    sprintf_s(startBuffer, "Starting healer boon sequence - Mode: %s", mode.c_str());
+    g_api->Log(ELogLevel_INFO, "GolemHelper", startBuffer);
+
+    try {
+        g_api->GameBinds.InvokeAsync(EGameBinds_MiscInteract, 50);
+        int initialDelay = g_state.useCustomDelays ? g_state.stepDelay : 390;
+        Sleep(initialDelay);
+
+        int delay = g_state.useCustomDelays ? g_state.stepDelay : 290;
+
+        if (g_state.isQuickDps) {
+            for (int i = 0; i < 10; i++) {
+                ClickAtScaled(g_coords.healerStepX[i], g_coords.healerStepY[i], delay);
+            }
+        }
+        else if (g_state.isAlacDps) {
+            int alacStepY[9] = { 262, 352, 352, 305, 500, 450, 450, 305, 262 };
+            for (int i = 0; i < 9; i++) {
+                ClickAtScaled(830, alacStepY[i], delay);
+            }
+        }
+
+        g_api->Log(ELogLevel_INFO, "GolemHelper", "Applying Environment Damage final click");
+
+        int finalY;
+        switch (g_state.envDamageLevel) {
+        case ENV_MILD: finalY = 352; break;
+        case ENV_MODERATE: finalY = 305; break;
+        case ENV_EXTREME: finalY = 262; break;
+        default: finalY = 352; break;
+        }
+
+        ClickAtScaled(830, finalY, 50);
+    }
+    catch (...) {
+        g_api->Log(ELogLevel_WARNING, "GolemHelper", "Exception during healer boon sequence");
+    }
+
+    if (uiWasVisible) {
+        g_state.showUI = true;
+    }
+
+    g_api->Log(ELogLevel_INFO, "GolemHelper", "Healer boon sequence completed!");
+}
+
 void ApplyAllBoons() {
     if (!g_api || !g_state.boonsEnabled || !g_state.enabled) return;
+
+    if (g_state.environmentDamage) {
+        ApplyHealerBoons();
+        return;
+    }
 
     bool uiWasVisible = g_state.showUI;
     if (uiWasVisible) {
@@ -439,15 +535,6 @@ void ApplyAllBoons() {
         mode = "Alac DPS";
     }
 
-    if (g_state.environmentDamage) {
-        mode += " + Environment ";
-        switch (g_state.envDamageLevel) {
-        case ENV_MILD: mode += "Mild"; break;
-        case ENV_MODERATE: mode += "Moderate"; break;
-        case ENV_EXTREME: mode += "Extreme"; break;
-        }
-    }
-
     char startBuffer[300];
     sprintf_s(startBuffer, "Starting boon sequence (20 steps) - Mode: %s", mode.c_str());
     g_api->Log(ELogLevel_INFO, "GolemHelper", startBuffer);
@@ -457,9 +544,7 @@ void ApplyAllBoons() {
         int initialDelay = g_state.useCustomDelays ? g_state.stepDelay : 390;
         Sleep(initialDelay);
 
-        int maxSteps = g_state.environmentDamage ? 19 : 20;
-
-        for (int i = 0; i < maxSteps; i++) {
+        for (int i = 0; i < 20; i++) {
             if (g_coords.boonStepX[i] == 0 && g_coords.boonStepY[i] == 0) {
                 continue;
             }
@@ -468,32 +553,9 @@ void ApplyAllBoons() {
                 continue;
             }
 
-            int delay = (i == maxSteps - 1) ? 50 : (g_state.useCustomDelays ? g_state.stepDelay : 290);
+            int delay = (i == 19) ? 50 : (g_state.useCustomDelays ? g_state.stepDelay : 290);
 
             ClickAtScaled(g_coords.boonStepX[i], g_coords.boonStepY[i], delay);
-        }
-
-        if (g_state.environmentDamage) {
-            g_api->Log(ELogLevel_INFO, "GolemHelper", "Applying Environment Damage sequence");
-
-            int delay = g_state.useCustomDelays ? g_state.stepDelay : 290;
-
-            Sleep(delay);
-            ClickAtScaled(830, 500, delay);
-            ClickAtScaled(830, 454, delay);
-            ClickAtScaled(830, 454, delay);
-            ClickAtScaled(830, 306, delay);
-            ClickAtScaled(830, 257, delay);
-
-            int finalY;
-            switch (g_state.envDamageLevel) {
-            case ENV_MILD: finalY = 352; break;
-            case ENV_MODERATE: finalY = 306; break;
-            case ENV_EXTREME: finalY = 257; break;
-            default: finalY = 352; break;
-            }
-
-            ClickAtScaled(830, finalY, 50);
         }
     }
     catch (...) {
@@ -516,7 +578,7 @@ void ApplyGolemSettings() {
     }
 
     const char* hitbox = g_state.hitboxType == HITBOX_SMALL ? "Small Hitbox" :
-        g_state.hitboxType == HITBOX_MEDIUM ? "Medium Hitbox" : "Big Hitbox";
+        g_state.hitboxType == HITBOX_MEDIUM ? "Medium Hitbox" : "Large Hitbox";
 
     std::string modifiers = "Normal";
     if (g_state.showAdvanced && (g_state.skipSlow || g_state.skipBurning || g_state.fiveBleedingStacks)) {
@@ -556,7 +618,7 @@ void ApplyGolemSettings() {
                 case HITBOX_MEDIUM:
                     currentY = 305;
                     break;
-                case HITBOX_BIG:
+                case HITBOX_LARGE:
                     currentY = 352;
                     break;
                 }
@@ -658,7 +720,7 @@ void Load(AddonAPI* aApi) {
     g_api->InputBinds.RegisterWithStruct("GolemHelper.ToggleUI", HandleUIToggleKeybind, kb_empty);
     g_api->InputBinds.RegisterWithStruct("GolemHelper.DebugMouse", HandleDebugKeybind, kb_empty);
 
-    g_api->Log(ELogLevel_INFO, "GolemHelper", "=== GolemHelper v1.0.0.0 Loaded ===");
+    g_api->Log(ELogLevel_INFO, "GolemHelper", "=== GolemHelper v1.0.1.0 Loaded ===");
     g_api->Log(ELogLevel_INFO, "GolemHelper", "<c=#00ff00>GolemHelper addon</c> loaded successfully!");
 }
 
@@ -686,7 +748,7 @@ extern "C" __declspec(dllexport) AddonDefinition* GetAddonDef() {
     def.Signature = -424248;
     def.APIVersion = NEXUS_API_VERSION;
     def.Name = "GolemHelper";
-    def.Version = { 1, 0, 0, 0 };
+    def.Version = { 1, 0, 1, 0 };
     def.Author = "Azrub";
     def.Description = "Automatically applies boons and golem settings in the training area";
     def.Load = Load;
