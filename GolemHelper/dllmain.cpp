@@ -1,10 +1,12 @@
 ﻿#include "pch.h"
-#include "Definitions/Nexus.h"
 #include <Windows.h>
 #include <vector>
 #include <string>
+#include <fstream>
+#include <sstream>
 
 #include "Dependencies/imgui/imgui.h"
+#include "Definitions/Nexus.h"
 #include "Dependencies/mumble/Mumble.h"
 
 AddonAPI* g_api = nullptr;
@@ -87,8 +89,109 @@ void HandleAlacDpsKeybind(const char* id, bool release);
 void HandleToggleKeybind(const char* id, bool release);
 void HandleUIToggleKeybind(const char* id, bool release);
 void HandleDebugKeybind(const char* id, bool release);
+void SaveCustomDelaySettings();
+void LoadCustomDelaySettings();
 void Load(AddonAPI* aApi);
 void Unload();
+
+std::string GetConfigFilePath() {
+    char gameDir[MAX_PATH];
+    GetModuleFileNameA(NULL, gameDir, MAX_PATH);
+
+    std::string gamePath = gameDir;
+    size_t lastSlash = gamePath.find_last_of("\\");
+    if (lastSlash != std::string::npos) {
+        gamePath = gamePath.substr(0, lastSlash);
+    }
+
+    std::string addonPath = gamePath + "\\addons\\GolemHelper";
+    CreateDirectoryA(addonPath.c_str(), NULL);
+
+    std::string configPath = addonPath + "\\config.ini";
+
+    if (g_api) {
+        char logBuffer[500];
+        sprintf_s(logBuffer, "Config file path: %s", configPath.c_str());
+        g_api->Log(ELogLevel_INFO, "GolemHelper", logBuffer);
+    }
+
+    return configPath;
+}
+
+void SaveCustomDelaySettings() {
+    if (!g_api) return;
+
+    std::string configPath = GetConfigFilePath();
+
+    try {
+        std::ofstream configFile(configPath);
+        if (!configFile.is_open()) {
+            g_api->Log(ELogLevel_WARNING, "GolemHelper", "Could not create config file");
+            return;
+        }
+
+        configFile << "[GolemHelper]" << std::endl;
+        configFile << "useCustomDelays=" << (g_state.useCustomDelays ? "1" : "0") << std::endl;
+        configFile << "stepDelay=" << g_state.stepDelay << std::endl;
+
+        configFile.close();
+
+        char logBuffer[200];
+        sprintf_s(logBuffer, "Custom delay settings saved: enabled=%s, delay=%dms",
+            g_state.useCustomDelays ? "true" : "false", g_state.stepDelay);
+        g_api->Log(ELogLevel_INFO, "GolemHelper", logBuffer);
+
+    }
+    catch (...) {
+        g_api->Log(ELogLevel_WARNING, "GolemHelper", "Failed to save config file");
+    }
+}
+
+void LoadCustomDelaySettings() {
+    if (!g_api) return;
+
+    std::string configPath = GetConfigFilePath();
+
+    try {
+        std::ifstream configFile(configPath);
+        if (!configFile.is_open()) {
+            g_api->Log(ELogLevel_INFO, "GolemHelper", "No config file found, using defaults");
+            return;
+        }
+
+        std::string line;
+        while (std::getline(configFile, line)) {
+            if (line.empty() || line[0] == '[') continue;
+
+            size_t equalPos = line.find('=');
+            if (equalPos == std::string::npos) continue;
+
+            std::string key = line.substr(0, equalPos);
+            std::string value = line.substr(equalPos + 1);
+
+            if (key == "useCustomDelays") {
+                g_state.useCustomDelays = (value == "1");
+            }
+            else if (key == "stepDelay") {
+                int delay = std::stoi(value);
+                if (delay >= 100 && delay <= 1000) {
+                    g_state.stepDelay = delay;
+                }
+            }
+        }
+
+        configFile.close();
+
+        char logBuffer[200];
+        sprintf_s(logBuffer, "Custom delay settings loaded: enabled=%s, delay=%dms",
+            g_state.useCustomDelays ? "true" : "false", g_state.stepDelay);
+        g_api->Log(ELogLevel_INFO, "GolemHelper", logBuffer);
+
+    }
+    catch (...) {
+        g_api->Log(ELogLevel_INFO, "GolemHelper", "Could not load config file, using defaults");
+    }
+}
 
 void RenderUI() {
     if (!g_state.showUI) return;
@@ -98,7 +201,7 @@ void RenderUI() {
 
     if (ImGui::Begin("GolemHelper", &g_state.showUI, ImGuiWindowFlags_AlwaysAutoResize)) {
 
-        ImGui::TextColored(ImVec4(0.2f, 0.8f, 1.0f, 1.0f), "GolemHelper v1.0.1.0");
+        ImGui::TextColored(ImVec4(0.2f, 0.8f, 1.0f, 1.0f), "GolemHelper v1.1.0.0");
         ImGui::Separator();
 
         ImGui::Text("Status:");
@@ -230,7 +333,9 @@ void RenderUI() {
         ImGui::Separator();
         ImGui::Text("Timing Settings");
 
-        bool wasUsingCustom = g_state.useCustomDelays;
+        bool oldUseCustomDelays = g_state.useCustomDelays;
+        int oldStepDelay = g_state.stepDelay;
+
         ImGui::Checkbox("Use Custom Step Delay", &g_state.useCustomDelays);
 
         if (g_state.useCustomDelays) {
@@ -239,16 +344,20 @@ void RenderUI() {
             ImGui::Spacing();
             if (ImGui::Button("Reset to Default", ImVec2(120, 0))) {
                 g_state.stepDelay = 290;
+                SaveCustomDelaySettings();
             }
             ImGui::SameLine();
             if (ImGui::Button("Slow Mode", ImVec2(80, 0))) {
                 g_state.stepDelay = 1000;
+                SaveCustomDelaySettings();
             }
 
-            if (!wasUsingCustom) {
-                ImGui::Spacing();
-                ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.2f, 1.0f), "Increase delay if clicks fail");
-            }
+            ImGui::Spacing();
+            ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.2f, 1.0f), "Increase delay if clicks fail");
+        }
+
+        if (oldUseCustomDelays != g_state.useCustomDelays || oldStepDelay != g_state.stepDelay) {
+            SaveCustomDelaySettings();
         }
     }
 
@@ -276,6 +385,8 @@ void RenderOptions() {
         g_state.stepDelay = 290;
         g_state.boonsEnabled = true;
         g_state.golemEnabled = true;
+
+        SaveCustomDelaySettings();
     }
 
     ImGui::Spacing();
@@ -315,6 +426,10 @@ void RenderOptions() {
     ImGui::Text("- Hitbox: %s", hitboxName);
 
     ImGui::Text("- Timing: %s", g_state.useCustomDelays ? "Custom" : "Default");
+
+    if (g_state.useCustomDelays) {
+        ImGui::Text("- Custom Delay: %d ms", g_state.stepDelay);
+    }
 }
 
 void GetScaledCoordinates(int baseX, int baseY, int* scaledX, int* scaledY) {
@@ -708,6 +823,8 @@ void Load(AddonAPI* aApi) {
 
     g_state.enabled = true;
 
+    LoadCustomDelaySettings();
+
     g_api->Renderer.Register(ERenderType_Render, RenderUI);
     g_api->Renderer.Register(ERenderType_OptionsRender, RenderOptions);
 
@@ -720,7 +837,7 @@ void Load(AddonAPI* aApi) {
     g_api->InputBinds.RegisterWithStruct("GolemHelper.ToggleUI", HandleUIToggleKeybind, kb_empty);
     g_api->InputBinds.RegisterWithStruct("GolemHelper.DebugMouse", HandleDebugKeybind, kb_empty);
 
-    g_api->Log(ELogLevel_INFO, "GolemHelper", "=== GolemHelper v1.0.1.0 Loaded ===");
+    g_api->Log(ELogLevel_INFO, "GolemHelper", "=== GolemHelper v1.1.0.0 Loaded ===");
     g_api->Log(ELogLevel_INFO, "GolemHelper", "<c=#00ff00>GolemHelper addon</c> loaded successfully!");
 }
 
@@ -748,7 +865,7 @@ extern "C" __declspec(dllexport) AddonDefinition* GetAddonDef() {
     def.Signature = -424248;
     def.APIVersion = NEXUS_API_VERSION;
     def.Name = "GolemHelper";
-    def.Version = { 1, 0, 1, 0 };
+    def.Version = { 1, 1, 0, 0 };
     def.Author = "Azrub";
     def.Description = "Automatically applies boons and golem settings in the training area";
     def.Load = Load;
