@@ -13,9 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Definitions">
-      <UniqueIdentifier>{076f83a5-9043-4392-bb42-102eb54d65fb}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Dependencies">
       <UniqueIdentifier>{27275069-8d0e-4c32-a745-abf5ae2384a5}</UniqueIdentifier>
     </Filter>
@@ -25,6 +22,9 @@
     <Filter Include="Dependencies\mumble">
       <UniqueIdentifier>{f98a3cf3-1848-4f30-ae62-50d10c81cf6f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Dependencies\nexus">
+      <UniqueIdentifier>{9474c716-f028-4778-8cd0-b5d8292d1586}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -32,9 +32,6 @@
     </ClInclude>
     <ClInclude Include="pch.h">
       <Filter>File di intestazione</Filter>
-    </ClInclude>
-    <ClInclude Include="Definitions\Nexus.h">
-      <Filter>Definitions</Filter>
     </ClInclude>
     <ClInclude Include="Dependencies\imgui\imconfig.h">
       <Filter>Dependencies\imgui</Filter>
@@ -56,6 +53,9 @@
     </ClInclude>
     <ClInclude Include="Dependencies\mumble\Mumble.h">
       <Filter>Dependencies\mumble</Filter>
+    </ClInclude>
+    <ClInclude Include="Dependencies\nexus\Nexus.h">
+      <Filter>Dependencies\nexus</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -6,7 +6,7 @@
 #include <sstream>
 
 #include "Dependencies/imgui/imgui.h"
-#include "Definitions/Nexus.h"
+#include "Dependencies/nexus/Nexus.h"
 #include "Dependencies/mumble/Mumble.h"
 
 AddonAPI* g_api = nullptr;
@@ -201,7 +201,7 @@ void RenderUI() {
 
     if (ImGui::Begin("GolemHelper", &g_state.showUI, ImGuiWindowFlags_AlwaysAutoResize)) {
 
-        ImGui::TextColored(ImVec4(0.2f, 0.8f, 1.0f, 1.0f), "GolemHelper v1.1.0.0");
+        ImGui::TextColored(ImVec4(0.2f, 0.8f, 1.0f, 1.0f), "GolemHelper v1.2.0.0");
         ImGui::Separator();
 
         ImGui::Text("Status:");
@@ -837,12 +837,26 @@ void Load(AddonAPI* aApi) {
     g_api->InputBinds.RegisterWithStruct("GolemHelper.ToggleUI", HandleUIToggleKeybind, kb_empty);
     g_api->InputBinds.RegisterWithStruct("GolemHelper.DebugMouse", HandleDebugKeybind, kb_empty);
 
-    g_api->Log(ELogLevel_INFO, "GolemHelper", "=== GolemHelper v1.1.0.0 Loaded ===");
+    /* COMMENTO IN ATTESA DI CUSTOM ICON
+    g_api->Textures.GetOrCreateFromFile("GOLEM_HELPER_ICON", "addons/GolemHelper/GOLEM_HELPER_ICON.png");
+    g_api->Textures.GetOrCreateFromFile("GOLEM_HELPER_ICON_HOVER", "addons/GolemHelper/GOLEM_HELPER_ICON_HOVER.png");
+    */
+
+    g_api->QuickAccess.Add(
+        "GolemHelper.ToggleUI",
+        "GOLEM_HELPER_ICON",
+        "GOLEM_HELPER_ICON_HOVER",
+        "GolemHelper.ToggleUI",
+        "Toggle GolemHelper UI"
+    );
+
+    g_api->Log(ELogLevel_INFO, "GolemHelper", "=== GolemHelper v1.2.0.0 Loaded ===");
     g_api->Log(ELogLevel_INFO, "GolemHelper", "<c=#00ff00>GolemHelper addon</c> loaded successfully!");
 }
 
 void Unload() {
     if (g_api) {
+        g_api->QuickAccess.Remove("GolemHelper.ToggleUI");
         g_api->Renderer.Deregister(RenderUI);
         g_api->Renderer.Deregister(RenderOptions);
         g_api->InputBinds.Deregister("GolemHelper.ApplyBoons");
@@ -865,9 +879,9 @@ extern "C" __declspec(dllexport) AddonDefinition* GetAddonDef() {
     def.Signature = -424248;
     def.APIVersion = NEXUS_API_VERSION;
     def.Name = "GolemHelper";
-    def.Version = { 1, 1, 0, 0 };
+    def.Version = { 1, 2, 0, 0 };
     def.Author = "Azrub";
-    def.Description = "Automatically applies boons and golem settings in the training area";
+    def.Description = "Automates the process of setting optimal boon and golem configurations in the training area";
     def.Load = Load;
     def.Unload = Unload;
     def.Flags = EAddonFlags_None;

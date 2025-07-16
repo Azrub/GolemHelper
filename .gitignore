@@ -1,41 +1,70 @@
 # Prerequisites
 *.d
-
 # Compiled Object files
 *.slo
 *.lo
 *.o
 *.obj
-
 # Precompiled Headers
 *.gch
 *.pch
-
 # Linker files
 *.ilk
-
 # Debugger Files
 *.pdb
-
 # Compiled Dynamic libraries
 *.so
 *.dylib
 *.dll
-
 # Fortran module files
 *.mod
 *.smod
-
 # Compiled Static libraries
 *.lai
 *.la
 *.a
 *.lib
-
 # Executables
 *.exe
 *.out
 *.app
-
 # debug information files
 *.dwo
+
+# Visual Studio specific files
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.vsidx
+*.vspscc
+*.vssscc
+.builds/
+*.pidb
+*.svclog
+*.scc
+
+# Build folders
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+build/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+
+# MSBuild
+*.log
+*.wrn
+*.err
+*.unsuccessfulbuild
+*.lastbuildstate
+*.command.*
+*.read.*
+*.write.*
+link-*
