@@ -25,6 +25,9 @@
     <Filter Include="Dependencies\nexus">
       <UniqueIdentifier>{9474c716-f028-4778-8cd0-b5d8292d1586}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resources">
+      <UniqueIdentifier>{07fb10f3-1f9b-483c-8721-e22bfe687792}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -80,5 +83,13 @@
     <ClCompile Include="Dependencies\imgui\imgui_widgets.cpp">
       <Filter>Dependencies\imgui</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\GOLEM_HELPER_ICON.png">
+      <Filter>Resources</Filter>
+    </None>
+    <None Include="Resources\GOLEM_HELPER_ICON_HOVER.png">
+      <Filter>Resources</Filter>
+    </None>
   </ItemGroup>
 </Project>

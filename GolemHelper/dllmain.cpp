@@ -8,6 +8,7 @@
 #include "Dependencies/imgui/imgui.h"
 #include "Dependencies/nexus/Nexus.h"
 #include "Dependencies/mumble/Mumble.h"
+#include "resource.h"
 
 AddonAPI* g_api = nullptr;
 NexusLinkData* NexusLink = nullptr;
@@ -91,10 +92,11 @@ void HandleUIToggleKeybind(const char* id, bool release);
 void HandleDebugKeybind(const char* id, bool release);
 void SaveCustomDelaySettings();
 void LoadCustomDelaySettings();
+void CopyResourceIcons();
 void Load(AddonAPI* aApi);
 void Unload();
 
-std::string GetConfigFilePath() {
+std::string GetAddonPath() {
     char gameDir[MAX_PATH];
     GetModuleFileNameA(NULL, gameDir, MAX_PATH);
 
@@ -107,7 +109,11 @@ std::string GetConfigFilePath() {
     std::string addonPath = gamePath + "\\addons\\GolemHelper";
     CreateDirectoryA(addonPath.c_str(), NULL);
 
-    std::string configPath = addonPath + "\\config.ini";
+    return addonPath;
+}
+
+std::string GetConfigFilePath() {
+    std::string configPath = GetAddonPath() + "\\config.ini";
 
     if (g_api) {
         char logBuffer[500];
@@ -116,6 +122,69 @@ std::string GetConfigFilePath() {
     }
 
     return configPath;
+}
+
+bool ExtractResourceToFile(HMODULE hModule, int resourceID, const std::string& filePath) {
+    HRSRC hRes = FindResourceA(hModule, MAKEINTRESOURCEA(resourceID), "PNG");
+    if (!hRes) return false;
+
+    HGLOBAL hData = LoadResource(hModule, hRes);
+    if (!hData) return false;
+
+    LPVOID pData = LockResource(hData);
+    if (!pData) return false;
+
+    DWORD dataSize = SizeofResource(hModule, hRes);
+    if (!dataSize) return false;
+
+    std::ofstream file(filePath, std::ios::binary);
+    if (!file.is_open()) return false;
+
+    file.write(static_cast<const char*>(pData), dataSize);
+    file.close();
+
+    return true;
+}
+
+void CopyResourceIcons() {
+    if (!g_api) return;
+
+    std::string addonPath = GetAddonPath();
+    std::string iconsPath = addonPath + "\\icons";
+    CreateDirectoryA(iconsPath.c_str(), NULL);
+
+    std::string iconDestPath = iconsPath + "\\GOLEM_HELPER_ICON.png";
+    std::string iconHoverDestPath = iconsPath + "\\GOLEM_HELPER_ICON_HOVER.png";
+
+    if (GetFileAttributesA(iconDestPath.c_str()) != INVALID_FILE_ATTRIBUTES &&
+        GetFileAttributesA(iconHoverDestPath.c_str()) != INVALID_FILE_ATTRIBUTES) {
+        g_api->Log(ELogLevel_INFO, "GolemHelper", "Icons already exist, skipping unpack");
+        return;
+    }
+
+    HMODULE hModule = GetModuleHandleA("GolemHelper.dll");
+    if (!hModule) {
+        g_api->Log(ELogLevel_WARNING, "GolemHelper", "Failed to get module handle");
+        return;
+    }
+
+    if (ExtractResourceToFile(hModule, IDB_PNG1, iconDestPath)) {
+        char logBuffer[300];
+        sprintf_s(logBuffer, "Extracted icon from resources: %s", iconDestPath.c_str());
+        g_api->Log(ELogLevel_INFO, "GolemHelper", logBuffer);
+    }
+    else {
+        g_api->Log(ELogLevel_WARNING, "GolemHelper", "Failed to extract normal icon from resources");
+    }
+
+    if (ExtractResourceToFile(hModule, IDB_PNG2, iconHoverDestPath)) {
+        char logBuffer[300];
+        sprintf_s(logBuffer, "Extracted hover icon from resources: %s", iconHoverDestPath.c_str());
+        g_api->Log(ELogLevel_INFO, "GolemHelper", logBuffer);
+    }
+    else {
+        g_api->Log(ELogLevel_WARNING, "GolemHelper", "Failed to extract hover icon from resources");
+    }
 }
 
 void SaveCustomDelaySettings() {
@@ -201,7 +270,7 @@ void RenderUI() {
 
     if (ImGui::Begin("GolemHelper", &g_state.showUI, ImGuiWindowFlags_AlwaysAutoResize)) {
 
-        ImGui::TextColored(ImVec4(0.2f, 0.8f, 1.0f, 1.0f), "GolemHelper v1.2.1.0");
+        ImGui::TextColored(ImVec4(0.2f, 0.8f, 1.0f, 1.0f), "GolemHelper v1.2.2.0");
         ImGui::Separator();
 
         ImGui::Text("Status:");
@@ -826,6 +895,8 @@ void Load(AddonAPI* aApi) {
 
     LoadCustomDelaySettings();
 
+    CopyResourceIcons();
+
     g_api->Renderer.Register(ERenderType_Render, RenderUI);
     g_api->Renderer.Register(ERenderType_OptionsRender, RenderOptions);
 
@@ -838,10 +909,8 @@ void Load(AddonAPI* aApi) {
     g_api->InputBinds.RegisterWithStruct("GolemHelper.ToggleUI", HandleUIToggleKeybind, kb_empty);
     g_api->InputBinds.RegisterWithStruct("GolemHelper.DebugMouse", HandleDebugKeybind, kb_empty);
 
-    /* COMMENTO IN ATTESA DI CUSTOM ICON
-    g_api->Textures.GetOrCreateFromFile("GOLEM_HELPER_ICON", "addons/GolemHelper/GOLEM_HELPER_ICON.png");
-    g_api->Textures.GetOrCreateFromFile("GOLEM_HELPER_ICON_HOVER", "addons/GolemHelper/GOLEM_HELPER_ICON_HOVER.png");
-    */
+    g_api->Textures.GetOrCreateFromFile("GOLEM_HELPER_ICON", "addons/GolemHelper/icons/GOLEM_HELPER_ICON.png");
+    g_api->Textures.GetOrCreateFromFile("GOLEM_HELPER_ICON_HOVER", "addons/GolemHelper/icons/GOLEM_HELPER_ICON_HOVER.png");
 
     g_api->QuickAccess.Add(
         "GolemHelper.ToggleUI",
@@ -851,7 +920,7 @@ void Load(AddonAPI* aApi) {
         "Toggle GolemHelper UI"
     );
 
-    g_api->Log(ELogLevel_INFO, "GolemHelper", "=== GolemHelper v1.2.1.0 Loaded ===");
+    g_api->Log(ELogLevel_INFO, "GolemHelper", "=== GolemHelper v1.2.2.0 Loaded ===");
     g_api->Log(ELogLevel_INFO, "GolemHelper", "<c=#00ff00>GolemHelper addon</c> loaded successfully!");
 }
 
@@ -880,7 +949,7 @@ extern "C" __declspec(dllexport) AddonDefinition* GetAddonDef() {
     def.Signature = -424248;
     def.APIVersion = NEXUS_API_VERSION;
     def.Name = "GolemHelper";
-    def.Version = { 1, 2, 1, 0 };
+    def.Version = { 1, 2, 2, 0 };
     def.Author = "Azrub";
     def.Description = "Automates the process of setting optimal boon and golem configurations in the training area";
     def.Load = Load;
