@@ -201,7 +201,7 @@ void RenderUI() {
 
     if (ImGui::Begin("GolemHelper", &g_state.showUI, ImGuiWindowFlags_AlwaysAutoResize)) {
 
-        ImGui::TextColored(ImVec4(0.2f, 0.8f, 1.0f, 1.0f), "GolemHelper v1.2.0.0");
+        ImGui::TextColored(ImVec4(0.2f, 0.8f, 1.0f, 1.0f), "GolemHelper v1.2.1.0");
         ImGui::Separator();
 
         ImGui::Text("Status:");
@@ -339,6 +339,7 @@ void RenderUI() {
         ImGui::Checkbox("Use Custom Step Delay", &g_state.useCustomDelays);
 
         if (g_state.useCustomDelays) {
+            ImGui::SetNextItemWidth(205);
             ImGui::SliderInt("", &g_state.stepDelay, 100, 1000, "%d ms");
 
             ImGui::Spacing();
@@ -850,7 +851,7 @@ void Load(AddonAPI* aApi) {
         "Toggle GolemHelper UI"
     );
 
-    g_api->Log(ELogLevel_INFO, "GolemHelper", "=== GolemHelper v1.2.0.0 Loaded ===");
+    g_api->Log(ELogLevel_INFO, "GolemHelper", "=== GolemHelper v1.2.1.0 Loaded ===");
     g_api->Log(ELogLevel_INFO, "GolemHelper", "<c=#00ff00>GolemHelper addon</c> loaded successfully!");
 }
 
@@ -879,7 +880,7 @@ extern "C" __declspec(dllexport) AddonDefinition* GetAddonDef() {
     def.Signature = -424248;
     def.APIVersion = NEXUS_API_VERSION;
     def.Name = "GolemHelper";
-    def.Version = { 1, 2, 0, 0 };
+    def.Version = { 1, 2, 1, 0 };
     def.Author = "Azrub";
     def.Description = "Automates the process of setting optimal boon and golem configurations in the training area";
     def.Load = Load;
