@@ -28,6 +28,24 @@
     <Filter Include="Resources">
       <UniqueIdentifier>{07fb10f3-1f9b-483c-8721-e22bfe687792}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Common">
+      <UniqueIdentifier>{b4daf0a2-ce7a-4961-b877-492964d4659a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utils">
+      <UniqueIdentifier>{2822a502-cacf-4886-9672-0fcc32ee7086}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Config">
+      <UniqueIdentifier>{b37262c0-bd49-4acd-8713-e2667f4bc9fe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Automation">
+      <UniqueIdentifier>{a9946213-e275-4fc2-989d-aff381613895}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UI">
+      <UniqueIdentifier>{4bbec8bd-548f-4efa-969c-af01a3e7e43f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Input">
+      <UniqueIdentifier>{f74436fc-a159-4a48-8ac8-f79f20fb657f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -60,6 +78,36 @@
     <ClInclude Include="Dependencies\nexus\Nexus.h">
       <Filter>Dependencies\nexus</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>File di intestazione</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\Globals.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\Types.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\FileUtils.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Config\ConfigManager.h">
+      <Filter>Config</Filter>
+    </ClInclude>
+    <ClInclude Include="Automation\AutomationLogic.h">
+      <Filter>Automation</Filter>
+    </ClInclude>
+    <ClInclude Include="Automation\CoordinateUtils.h">
+      <Filter>Automation</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\UIManager.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Input\KeybindManager.h">
+      <Filter>Input</Filter>
+    </ClInclude>
+    <ClInclude Include="GolemHelper.h">
+      <Filter>File di origine</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -83,13 +131,42 @@
     <ClCompile Include="Dependencies\imgui\imgui_widgets.cpp">
       <Filter>Dependencies\imgui</Filter>
     </ClCompile>
+    <ClCompile Include="Common\Globals.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils\FileUtils.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="Config\ConfigManager.cpp">
+      <Filter>Config</Filter>
+    </ClCompile>
+    <ClCompile Include="Automation\AutomationLogic.cpp">
+      <Filter>Automation</Filter>
+    </ClCompile>
+    <ClCompile Include="Automation\CoordinateUtils.cpp">
+      <Filter>Automation</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\UIManager.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Input\KeybindManager.cpp">
+      <Filter>Input</Filter>
+    </ClCompile>
+    <ClCompile Include="GolemHelper.cpp">
+      <Filter>File di origine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\GOLEM_HELPER_ICON.png">
-      <Filter>Resources</Filter>
-    </None>
-    <None Include="Resources\GOLEM_HELPER_ICON_HOVER.png">
-      <Filter>Resources</Filter>
-    </None>
+    <ResourceCompile Include="GolemHelper.rc">
+      <Filter>File di risorse</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Resources\GOLEM_HELPER_ICON.png">
+      <Filter>File di risorse</Filter>
+    </Image>
+    <Image Include="Resources\GOLEM_HELPER_ICON_HOVER.png">
+      <Filter>File di risorse</Filter>
+    </Image>
   </ItemGroup>
 </Project>
