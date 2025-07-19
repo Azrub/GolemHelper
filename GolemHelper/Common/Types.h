@@ -28,8 +28,11 @@ struct GolemHelperState {
     bool showUI = false;
     bool useCustomDelays = false;
     bool showAdvanced = false;
+    bool showTimingSettings = false;
     int debugCounter = 0;
-    int stepDelay = 290;
+
+    int initialDelay = 390;
+    int stepDelay = 290;    
 };
 
 struct MenuCoordinates {

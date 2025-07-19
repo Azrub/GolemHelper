@@ -21,12 +21,13 @@ void ConfigManager::SaveCustomDelaySettings() {
         configFile << "[GolemHelper]" << std::endl;
         configFile << "useCustomDelays=" << (g_state.useCustomDelays ? "1" : "0") << std::endl;
         configFile << "stepDelay=" << g_state.stepDelay << std::endl;
+        configFile << "initialDelay=" << g_state.initialDelay << std::endl;
 
         configFile.close();
 
-        char logBuffer[200];
-        sprintf_s(logBuffer, "Custom delay settings saved: enabled=%s, delay=%dms",
-            g_state.useCustomDelays ? "true" : "false", g_state.stepDelay);
+        char logBuffer[250];
+        sprintf_s(logBuffer, "Custom delay settings saved: enabled=%s, stepDelay=%dms, initialDelay=%dms",
+            g_state.useCustomDelays ? "true" : "false", g_state.stepDelay, g_state.initialDelay);
         g_api->Log(ELogLevel_INFO, "GolemHelper", logBuffer);
 
     }
@@ -66,13 +67,19 @@ void ConfigManager::LoadCustomDelaySettings() {
                     g_state.stepDelay = delay;
                 }
             }
+            else if (key == "initialDelay") {
+                int delay = std::stoi(value);
+                if (delay >= 100 && delay <= 1000) {
+                    g_state.initialDelay = delay;
+                }
+            }
         }
 
         configFile.close();
 
-        char logBuffer[200];
-        sprintf_s(logBuffer, "Custom delay settings loaded: enabled=%s, delay=%dms",
-            g_state.useCustomDelays ? "true" : "false", g_state.stepDelay);
+        char logBuffer[250];
+        sprintf_s(logBuffer, "Custom delay settings loaded: enabled=%s, stepDelay=%dms, initialDelay=%dms",
+            g_state.useCustomDelays ? "true" : "false", g_state.stepDelay, g_state.initialDelay);
         g_api->Log(ELogLevel_INFO, "GolemHelper", logBuffer);
 
     }

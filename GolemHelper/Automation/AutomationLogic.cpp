@@ -61,7 +61,7 @@ void AutomationLogic::ApplyHealerBoons() {
 
     try {
         g_api->GameBinds.InvokeAsync(EGameBinds_MiscInteract, 50);
-        int initialDelay = g_state.useCustomDelays ? g_state.stepDelay : 390;
+        int initialDelay = g_state.useCustomDelays ? g_state.initialDelay : 390;
         Sleep(initialDelay);
 
         int delay = g_state.useCustomDelays ? g_state.stepDelay : 290;
@@ -128,7 +128,7 @@ void AutomationLogic::ApplyAllBoons() {
 
     try {
         g_api->GameBinds.InvokeAsync(EGameBinds_MiscInteract, 50);
-        int initialDelay = g_state.useCustomDelays ? g_state.stepDelay : 390;
+        int initialDelay = g_state.useCustomDelays ? g_state.initialDelay : 390;
         Sleep(initialDelay);
 
         for (int i = 0; i < 20; i++) {
@@ -182,7 +182,7 @@ void AutomationLogic::ApplyGolemSettings() {
 
     try {
         g_api->GameBinds.InvokeAsync(EGameBinds_MiscInteract, 50);
-        int initialDelay = g_state.useCustomDelays ? g_state.stepDelay : 390;
+        int initialDelay = g_state.useCustomDelays ? g_state.initialDelay : 390;
         Sleep(initialDelay);
 
         for (int i = 0; i < 25; i++) {

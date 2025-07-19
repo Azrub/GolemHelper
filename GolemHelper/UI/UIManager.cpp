@@ -13,7 +13,7 @@ void UIManager::RenderUI() {
 
     if (ImGui::Begin("GolemHelper", &g_state.showUI, ImGuiWindowFlags_AlwaysAutoResize)) {
 
-        ImGui::TextColored(ImVec4(0.2f, 0.8f, 1.0f, 1.0f), "GolemHelper v1.2.2.0");
+        ImGui::TextColored(ImVec4(0.2f, 0.8f, 1.0f, 1.0f), "GolemHelper v1.2.3.0");
         ImGui::Separator();
 
         ImGui::Text("Status:");
@@ -143,34 +143,47 @@ void UIManager::RenderUI() {
 
         ImGui::Spacing();
         ImGui::Separator();
-        ImGui::Text("Timing Settings");
 
-        bool oldUseCustomDelays = g_state.useCustomDelays;
-        int oldStepDelay = g_state.stepDelay;
+        if (ImGui::CollapsingHeader("Set Custom Delays")) {
 
-        ImGui::Checkbox("Use Custom Step Delay", &g_state.useCustomDelays);
+            bool oldUseCustomDelays = g_state.useCustomDelays;
+            int oldStepDelay = g_state.stepDelay;
+            int oldInitialDelay = g_state.initialDelay;
 
-        if (g_state.useCustomDelays) {
-            ImGui::SetNextItemWidth(205);
-            ImGui::SliderInt("", &g_state.stepDelay, 100, 1000, "%d ms");
+            ImGui::Checkbox("Use Custom Delays", &g_state.useCustomDelays);
 
             ImGui::Spacing();
+
+            ImGui::Text("Initial Delay (after F key):");
+            ImGui::SetNextItemWidth(205);
+            ImGui::SliderInt("##initial", &g_state.initialDelay, 100, 1000, "%d ms");
+
+            ImGui::Text("Step Delay (between clicks):");
+            ImGui::SetNextItemWidth(205);
+            ImGui::SliderInt("##step", &g_state.stepDelay, 100, 1000, "%d ms");
+
+            ImGui::Spacing();
+
             if (ImGui::Button("Reset to Default", ImVec2(120, 0))) {
                 g_state.stepDelay = 290;
+                g_state.initialDelay = 390;
                 ConfigManager::SaveCustomDelaySettings();
             }
             ImGui::SameLine();
             if (ImGui::Button("Slow Mode", ImVec2(80, 0))) {
                 g_state.stepDelay = 1000;
+                g_state.initialDelay = 600;
                 ConfigManager::SaveCustomDelaySettings();
             }
 
             ImGui::Spacing();
-            ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.2f, 1.0f), "Increase delay if clicks fail");
-        }
+            ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.2f, 1.0f), "Increase delays if clicks fail");
 
-        if (oldUseCustomDelays != g_state.useCustomDelays || oldStepDelay != g_state.stepDelay) {
-            ConfigManager::SaveCustomDelaySettings();
+            if (oldUseCustomDelays != g_state.useCustomDelays ||
+                oldStepDelay != g_state.stepDelay ||
+                oldInitialDelay != g_state.initialDelay) {
+                ConfigManager::SaveCustomDelaySettings();
+            }
         }
     }
 
@@ -195,7 +208,9 @@ void UIManager::RenderOptions() {
         g_state.hitboxType = HITBOX_SMALL;
         g_state.useCustomDelays = false;
         g_state.showAdvanced = false;
+        g_state.showTimingSettings = false;
         g_state.stepDelay = 290;
+        g_state.initialDelay = 390;
         g_state.boonsEnabled = true;
         g_state.golemEnabled = true;
 
@@ -241,6 +256,7 @@ void UIManager::RenderOptions() {
     ImGui::Text("- Timing: %s", g_state.useCustomDelays ? "Custom" : "Default");
 
     if (g_state.useCustomDelays) {
-        ImGui::Text("- Custom Delay: %d ms", g_state.stepDelay);
+        ImGui::Text("- Step Delay: %d ms", g_state.stepDelay);
+        ImGui::Text("- Initial Delay: %d ms", g_state.initialDelay);
     }
 }
