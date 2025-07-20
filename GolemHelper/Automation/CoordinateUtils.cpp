@@ -35,6 +35,29 @@ void CoordinateUtils::GetScaledCoordinates(int baseX, int baseY, int* scaledX, i
                 g_api->Log(ELogLevel_INFO, "GolemHelper", "ULTRAWIDE 5120x1440: APPLIED NORMAL UI OFFSET");
             }
         }
+        // Ultrawide 3440x1440
+        else if (g_nexusLink->Width == 3440 && g_nexusLink->Height == 1440) {
+            if (uiScale >= 0.89f && uiScale <= 0.91f) {
+                dpiScaleX = 1.810f;
+                dpiScaleY = 0.892f;
+                g_api->Log(ELogLevel_INFO, "GolemHelper", "ULTRAWIDE 3440x1440: APPLIED SMALL UI OFFSET");
+            }
+            else if (uiScale >= 1.09f && uiScale <= 1.15f) {
+                dpiScaleX = 1.741f;
+                dpiScaleY = 1.104f;
+                g_api->Log(ELogLevel_INFO, "GolemHelper", "ULTRAWIDE 3440x1440: APPLIED LARGE UI OFFSET");
+            }
+            else if (uiScale >= 1.21f && uiScale <= 1.25f) {
+                dpiScaleX = 1.708f;
+                dpiScaleY = 1.212f;
+                g_api->Log(ELogLevel_INFO, "GolemHelper", "ULTRAWIDE 3440x1440: APPLIED LARGER UI OFFSET");
+            }
+            else {
+                dpiScaleX = 1.773f;
+                dpiScaleY = 0.992f;
+                g_api->Log(ELogLevel_INFO, "GolemHelper", "ULTRAWIDE 3440x1440: APPLIED NORMAL UI OFFSET");
+            }
+        }
         else {
             dpiScaleX = (float)g_nexusLink->Width / 1920.0f;
             dpiScaleY = 1.0f;
@@ -56,7 +79,8 @@ void CoordinateUtils::GetScaledCoordinates(int baseX, int baseY, int* scaledX, i
         int finalX = scaledForResolutionX;
         int finalY = scaledForResolutionY;
 
-        if (!(g_nexusLink->Width == 5120 && g_nexusLink->Height == 1440)) {
+        if (!(g_nexusLink->Width == 5120 && g_nexusLink->Height == 1440) &&
+            !(g_nexusLink->Width == 3440 && g_nexusLink->Height == 1440)) {
             if (uiScale >= 0.89f && uiScale <= 0.91f) {
                 finalX = scaledForResolutionX - (int)(scaledForResolutionX * 0.029f);
                 finalY = scaledForResolutionY - (int)(scaledForResolutionY * 0.103f);
