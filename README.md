@@ -1,33 +1,29 @@
-# GolemHelper BETA
+# GolemHelper
 
-A Guild Wars 2 addon for [Nexus](https://github.com/RaidcoreGG/Nexus) that that automates boon application and golem configuration in the Special Forces Training Area with support for different DPS role modes.
-
-## Description
-
-GolemHelper eliminates the tedious manual clicking required to set up optimal training conditions. With a single keypress, you can apply all necessary boons or configure golem settings.
-The addon automatically scales coordinates for different resolutions and UI sizes.
-
-Particularly useful for players who:
-- Regularly practice rotations on training golems
-- Test different build configurations
-- Play multiple DPS roles (Quickness DPS, Alacrity DPS, Chronomancer DT+DR)
-- Want to minimize setup time and focus on actual gameplay practice
+A Guild Wars 2 addon for [Nexus](https://github.com/RaidcoreGG/Nexus) that automates optimal boon and golem configurations in the Special Forces Training Area.
 
 ## Features
 
-- Automated Boon Application: Apply boon configuration based on dps mode.
-- Automated Golem Configuration: Apply SnowCrows benchmark settings on golem with one keypress.
+DPS Benchmarking:
 
-DPS Modes:
-- Quick DPS Mode: Automatically skips Quickness boon
-- Alac DPS Mode: Automatically skips Alacrity boon
-- Chronomancer Mode: Automatically skips Slow debuff on golem
+- hi dps
+- Quick DPS
+- Alac DPS
 
-## Planned Features (No ETA)
+Healer Support:
 
-- ImGui Interface: Visual interface for easier mode switching and configuration (coming in v1.0.0 final)
-- Additional DPS Modes: More specialized role configurations based on community feedback
-- Custom Presets: User-defined boon and golem configurations
+- Environment Damage with Mild/Moderate/Extreme settings
+- Specialized healer boon sequences (qHeal/aHeal modes)
+
+Golem Customization:
+
+- Hitbox selection: Small/Medium/Large (Small is benchmark default)
+- Advanced condition modifiers: Skip Slow, Skip Burning, 5 Bleeding Stacks
+
+Tips:
+
+- If the sequence is too fast and missing clicks, increase Custom Delays in the UI
+- You can move your mouse during the sequence, just don't hover over UIs or click
 
 ## Installation
 
