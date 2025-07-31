@@ -61,20 +61,17 @@ void AutomationLogic::ApplyHealerBoons() {
 
     try {
         g_api->GameBinds.InvokeAsync(EGameBinds_MiscInteract, 50);
-        int initialDelay = g_state.useCustomDelays ? g_state.initialDelay : 390;
-        Sleep(initialDelay);
-
-        int delay = g_state.useCustomDelays ? g_state.stepDelay : 290;
+        Sleep(g_state.initialDelay);
 
         if (g_state.isQuickDps) {
             for (int i = 0; i < 10; i++) {
-                CoordinateUtils::ClickAtScaled(g_coords.healerStepX[i], g_coords.healerStepY[i], delay);
+                CoordinateUtils::ClickAtScaled(g_coords.healerStepX[i], g_coords.healerStepY[i], g_state.stepDelay);
             }
         }
         else if (g_state.isAlacDps) {
             int alacStepY[9] = { 262, 352, 352, 305, 500, 450, 450, 305, 262 };
             for (int i = 0; i < 9; i++) {
-                CoordinateUtils::ClickAtScaled(830, alacStepY[i], delay);
+                CoordinateUtils::ClickAtScaled(830, alacStepY[i], g_state.stepDelay);
             }
         }
 
@@ -128,8 +125,7 @@ void AutomationLogic::ApplyAllBoons() {
 
     try {
         g_api->GameBinds.InvokeAsync(EGameBinds_MiscInteract, 50);
-        int initialDelay = g_state.useCustomDelays ? g_state.initialDelay : 390;
-        Sleep(initialDelay);
+        Sleep(g_state.initialDelay);
 
         for (int i = 0; i < 20; i++) {
             if (g_coords.boonStepX[i] == 0 && g_coords.boonStepY[i] == 0) {
@@ -140,7 +136,7 @@ void AutomationLogic::ApplyAllBoons() {
                 continue;
             }
 
-            int delay = (i == 19) ? 50 : (g_state.useCustomDelays ? g_state.stepDelay : 290);
+            int delay = (i == 19) ? 50 : g_state.stepDelay;
 
             CoordinateUtils::ClickAtScaled(g_coords.boonStepX[i], g_coords.boonStepY[i], delay);
         }
@@ -182,8 +178,7 @@ void AutomationLogic::ApplyGolemSettings() {
 
     try {
         g_api->GameBinds.InvokeAsync(EGameBinds_MiscInteract, 50);
-        int initialDelay = g_state.useCustomDelays ? g_state.initialDelay : 390;
-        Sleep(initialDelay);
+        Sleep(g_state.initialDelay);
 
         for (int i = 0; i < 25; i++) {
             if (g_coords.golemStepX[i] == 0 && g_coords.golemStepY[i] == 0) {
@@ -211,7 +206,7 @@ void AutomationLogic::ApplyGolemSettings() {
                 }
             }
 
-            int delay = (i == 24) ? 50 : (g_state.useCustomDelays ? g_state.stepDelay : 290);
+            int delay = (i == 24) ? 50 : g_state.stepDelay;
 
             CoordinateUtils::ClickAtScaled(currentX, currentY, delay);
 
@@ -219,8 +214,7 @@ void AutomationLogic::ApplyGolemSettings() {
                 g_api->Log(ELogLevel_INFO, "GolemHelper", "5 Bleeding Stacks - repeating 7th step 4 more times");
 
                 for (int repeat = 0; repeat < 4; repeat++) {
-                    int repeatDelay = g_state.useCustomDelays ? g_state.stepDelay : 290;
-                    CoordinateUtils::ClickAtScaled(currentX, currentY, repeatDelay);
+                    CoordinateUtils::ClickAtScaled(currentX, currentY, g_state.stepDelay);
                 }
             }
         }

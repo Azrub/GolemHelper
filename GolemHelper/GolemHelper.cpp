@@ -33,10 +33,10 @@ void Load(AddonAPI* aApi) {
         "GOLEM_HELPER_ICON",
         "GOLEM_HELPER_ICON_HOVER",
         "GolemHelper.ToggleUI",
-        "Toggle GolemHelper UI"
+        "GolemHelper UI"
     );
 
-    g_api->Log(ELogLevel_INFO, "GolemHelper", "=== GolemHelper v1.2.5.0 Loaded ===");
+    g_api->Log(ELogLevel_INFO, "GolemHelper", "=== GolemHelper v1.2.6.0 Loaded ===");
     g_api->Log(ELogLevel_INFO, "GolemHelper", "<c=#00ff00>GolemHelper addon</c> loaded successfully!");
 }
 
@@ -59,7 +59,7 @@ extern "C" __declspec(dllexport) AddonDefinition* GetAddonDef() {
     def.Signature = -424248;
     def.APIVersion = NEXUS_API_VERSION;
     def.Name = "GolemHelper";
-    def.Version = { 1, 2, 5, 0 };
+    def.Version = { 1, 2, 6, 0 };
     def.Author = "Azrub";
     def.Description = "Automates the process of setting optimal boon and golem configurations in the training area";
     def.Load = Load;
