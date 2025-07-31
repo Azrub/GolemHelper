@@ -1,4 +1,5 @@
 #pragma once
+#include "../Dependencies/mumble/mumble.h"
 
 enum HitboxType {
     HITBOX_SMALL = 0,
@@ -32,6 +33,9 @@ struct GolemHelperState {
 
     int initialDelay = 390;
     int stepDelay = 290;
+
+    bool quickAccessVisible = false;
+    unsigned int lastMapID = 0;
 };
 
 struct MenuCoordinates {

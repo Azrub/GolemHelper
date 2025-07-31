@@ -3,9 +3,12 @@
 #include "UIManager.h"
 #include "../Common/Globals.h"
 #include "../Config/ConfigManager.h"
+#include "../Utils/MapUtils.h"
 #include "../Dependencies/imgui/imgui.h"
 
 void UIManager::RenderUI() {
+    MapUtils::UpdateQuickAccessVisibility();
+
     if (!g_state.showUI) return;
 
     ImGui::SetNextWindowSize(ImVec2(400, 500), ImGuiCond_FirstUseEver);
@@ -13,7 +16,7 @@ void UIManager::RenderUI() {
 
     if (ImGui::Begin("GolemHelper", &g_state.showUI, ImGuiWindowFlags_AlwaysAutoResize)) {
 
-        ImGui::TextColored(ImVec4(0.2f, 0.8f, 1.0f, 1.0f), "GolemHelper v1.2.6.0");
+        ImGui::TextColored(ImVec4(0.2f, 0.8f, 1.0f, 1.0f), "GolemHelper v1.3.0.0");
         ImGui::Separator();
 
         ImGui::Text("Status:");
@@ -139,6 +142,13 @@ void UIManager::RenderUI() {
                 ImGui::Text("DPI Scale: %.3f", dpiScale);
                 ImGui::Text("Debug samples: %d", g_state.debugCounter);
             }
+
+            ImGui::Spacing();
+            ImGui::Text("Map Info:");
+            unsigned int currentMapID = MapUtils::GetCurrentMapID();
+            ImGui::Text("Current MapID: %u", currentMapID);
+            ImGui::Text("Is Training Area: %s", MapUtils::IsInTrainingArea() ? "YES" : "NO");
+            ImGui::Text("QuickAccess Visible: %s", g_state.quickAccessVisible ? "YES" : "NO");
         }
 
         ImGui::Spacing();

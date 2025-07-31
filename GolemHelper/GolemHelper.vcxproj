@@ -161,6 +161,7 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="UI\UIManager.h" />
     <ClInclude Include="Utils\FileUtils.h" />
+    <ClInclude Include="Utils\MapUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Automation\AutomationLogic.cpp" />
@@ -213,6 +214,7 @@
     </ClCompile>
     <ClCompile Include="UI\UIManager.cpp" />
     <ClCompile Include="Utils\FileUtils.cpp" />
+    <ClCompile Include="Utils\MapUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="GolemHelper.rc" />

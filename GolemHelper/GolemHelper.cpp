@@ -2,6 +2,7 @@
 #include <string>
 #include "Common/Globals.h"
 #include "Utils/FileUtils.h"
+#include "Utils/MapUtils.h"
 #include "Config/ConfigManager.h"
 #include "UI/UIManager.h"
 #include "Input/KeybindManager.h"
@@ -14,6 +15,8 @@ void Load(AddonAPI* aApi) {
     ImGui::SetAllocatorFunctions((void* (*)(size_t, void*))g_api->ImguiMalloc, (void(*)(void*, void*))g_api->ImguiFree);
 
     g_nexusLink = (NexusLinkData*)g_api->DataLink.Get("DL_NEXUS_LINK");
+
+    g_mumbleData = (Mumble::Data*)g_api->DataLink.Get("DL_MUMBLE_LINK");
 
     g_state.enabled = true;
 
@@ -28,21 +31,17 @@ void Load(AddonAPI* aApi) {
     g_api->Textures.GetOrCreateFromFile("GOLEM_HELPER_ICON", "addons/GolemHelper/icons/GOLEM_HELPER_ICON.png");
     g_api->Textures.GetOrCreateFromFile("GOLEM_HELPER_ICON_HOVER", "addons/GolemHelper/icons/GOLEM_HELPER_ICON_HOVER.png");
 
-    g_api->QuickAccess.Add(
-        "GolemHelper.ToggleUI",
-        "GOLEM_HELPER_ICON",
-        "GOLEM_HELPER_ICON_HOVER",
-        "GolemHelper.ToggleUI",
-        "GolemHelper UI"
-    );
+    MapUtils::UpdateQuickAccessVisibility();
 
-    g_api->Log(ELogLevel_INFO, "GolemHelper", "=== GolemHelper v1.2.6.0 Loaded ===");
+    g_api->Log(ELogLevel_INFO, "GolemHelper", "=== GolemHelper v1.3.0.0 Loaded ===");
     g_api->Log(ELogLevel_INFO, "GolemHelper", "<c=#00ff00>GolemHelper addon</c> loaded successfully!");
 }
 
 void Unload() {
     if (g_api) {
-        g_api->QuickAccess.Remove("GolemHelper.ToggleUI");
+        if (g_state.quickAccessVisible) {
+            g_api->QuickAccess.Remove("GolemHelper.ToggleUI");
+        }
         g_api->Renderer.Deregister(UIManager::RenderUI);
         g_api->Renderer.Deregister(UIManager::RenderOptions);
         KeybindManager::UnregisterKeybinds();
@@ -50,8 +49,10 @@ void Unload() {
 
     g_api->Log(ELogLevel_INFO, "GolemHelper", "<c=#ff0000>GolemHelper signing off</c>, it was an honor commander.");
     g_api = nullptr;
+    g_mumbleData = nullptr;
     g_state.enabled = false;
     g_state.showUI = false;
+    g_state.quickAccessVisible = false;
 }
 
 extern "C" __declspec(dllexport) AddonDefinition* GetAddonDef() {
@@ -59,7 +60,7 @@ extern "C" __declspec(dllexport) AddonDefinition* GetAddonDef() {
     def.Signature = -424248;
     def.APIVersion = NEXUS_API_VERSION;
     def.Name = "GolemHelper";
-    def.Version = { 1, 2, 6, 0 };
+    def.Version = { 1, 3, 0, 0 };
     def.Author = "Azrub";
     def.Description = "Automates the process of setting optimal boon and golem configurations in the training area";
     def.Load = Load;
