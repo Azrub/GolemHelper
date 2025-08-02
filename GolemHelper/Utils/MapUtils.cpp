@@ -1,7 +1,4 @@
 #include <Windows.h>
-#include <string>
-#include <sstream>
-#include <iostream>
 #include "MapUtils.h"
 #include "../Common/Globals.h"
 
@@ -20,10 +17,10 @@ unsigned int MapUtils::GetCurrentMapID() {
 void MapUtils::UpdateQuickAccessVisibility() {
     if (!g_api) return;
 
-    bool shouldBeVisible = IsInTrainingArea();
+    bool shouldBeVisible = IsInTrainingArea() && !g_state.alwaysHideIcon;
     unsigned int currentMapID = GetCurrentMapID();
 
-    if (currentMapID != g_state.lastMapID) {
+    if (currentMapID != g_state.lastMapID || g_state.quickAccessVisible != shouldBeVisible) {
         g_state.lastMapID = currentMapID;
 
         if (shouldBeVisible && !g_state.quickAccessVisible) {
@@ -42,13 +39,14 @@ void MapUtils::UpdateQuickAccessVisibility() {
                 g_api->Log(ELogLevel_INFO, "GolemHelper", buffer);
             }
         }
-        else if (!shouldBeVisible && g_state.quickAccessVisible) {
+        else if ((!shouldBeVisible || g_state.alwaysHideIcon) && g_state.quickAccessVisible) {
             g_api->QuickAccess.Remove("GolemHelper.ToggleUI");
             g_state.quickAccessVisible = false;
 
             if (g_state.debugMode) {
-                char buffer[150];
-                sprintf_s(buffer, sizeof(buffer), "QuickAccess icon REMOVED - MapID: %u (Not Training Area)", currentMapID);
+                const char* reason = g_state.alwaysHideIcon ? "Always Hide Icon enabled" : "Not Training Area";
+                char buffer[200];
+                sprintf_s(buffer, sizeof(buffer), "QuickAccess icon REMOVED - MapID: %u (%s)", currentMapID, reason);
                 g_api->Log(ELogLevel_INFO, "GolemHelper", buffer);
             }
         }

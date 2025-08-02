@@ -33,7 +33,7 @@ bool AutomationLogic::ShouldSkipGolemStep(int stepIndex) {
 }
 
 void AutomationLogic::ApplyHealerBoons() {
-    if (!g_api || !g_state.boonsEnabled || !g_state.enabled) return;
+    if (!g_api || !g_state.enabled) return;
 
     bool uiWasVisible = g_state.showUI;
     if (uiWasVisible) {
@@ -99,7 +99,7 @@ void AutomationLogic::ApplyHealerBoons() {
 }
 
 void AutomationLogic::ApplyAllBoons() {
-    if (!g_api || !g_state.boonsEnabled || !g_state.enabled) return;
+    if (!g_api || !g_state.enabled) return;
 
     if (g_state.environmentDamage) {
         ApplyHealerBoons();
@@ -119,8 +119,16 @@ void AutomationLogic::ApplyAllBoons() {
         mode = "Alac DPS";
     }
 
+    std::string advancedBoons = "";
+    if (g_state.showBoonAdvanced && (g_state.addResistance || g_state.addStability)) {
+        advancedBoons = " + ";
+        if (g_state.addResistance) advancedBoons += "Resistance ";
+        if (g_state.addStability) advancedBoons += "Stability ";
+        advancedBoons.pop_back();
+    }
+
     char startBuffer[300];
-    sprintf_s(startBuffer, "Starting boon sequence (20 steps) - Mode: %s", mode.c_str());
+    sprintf_s(startBuffer, "Starting boon sequence (20 steps) - Mode: %s%s", mode.c_str(), advancedBoons.c_str());
     g_api->Log(ELogLevel_INFO, "GolemHelper", startBuffer);
 
     try {
@@ -136,8 +144,23 @@ void AutomationLogic::ApplyAllBoons() {
                 continue;
             }
 
-            int delay = (i == 19) ? 50 : g_state.stepDelay;
+            if (i == 9) {
+                CoordinateUtils::ClickAtScaled(g_coords.boonStepX[i], g_coords.boonStepY[i], g_state.stepDelay);
 
+                if (g_state.showBoonAdvanced && g_state.addResistance) {
+                    g_api->Log(ELogLevel_INFO, "GolemHelper", "Adding Resistance");
+                    CoordinateUtils::ClickAtScaled(g_coords.resistanceX, g_coords.resistanceY, g_state.stepDelay);
+                }
+
+                if (g_state.showBoonAdvanced && g_state.addStability) {
+                    g_api->Log(ELogLevel_INFO, "GolemHelper", "Adding Stability");
+                    CoordinateUtils::ClickAtScaled(g_coords.stabilityX, g_coords.stabilityY, g_state.stepDelay);
+                }
+
+                continue;
+            }
+
+            int delay = (i == 19) ? 50 : g_state.stepDelay;
             CoordinateUtils::ClickAtScaled(g_coords.boonStepX[i], g_coords.boonStepY[i], delay);
         }
     }
@@ -153,7 +176,7 @@ void AutomationLogic::ApplyAllBoons() {
 }
 
 void AutomationLogic::ApplyGolemSettings() {
-    if (!g_api || !g_state.golemEnabled || !g_state.enabled) return;
+    if (!g_api || !g_state.enabled) return;
 
     bool uiWasVisible = g_state.showUI;
     if (uiWasVisible) {

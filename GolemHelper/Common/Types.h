@@ -1,5 +1,7 @@
 #pragma once
 #include "../Dependencies/mumble/mumble.h"
+#include <vector>
+#include <string>
 
 enum HitboxType {
     HITBOX_SMALL = 0,
@@ -13,10 +15,38 @@ enum EnvironmentDamageLevel {
     ENV_EXTREME = 2
 };
 
+struct GolemTemplate {
+    std::string name;
+    bool isQuickDps;
+    bool isAlacDps;
+    bool environmentDamage;
+    EnvironmentDamageLevel envDamageLevel;
+    bool skipSlow;
+    bool skipBurning;
+    bool fiveBleedingStacks;
+    HitboxType hitboxType;
+    bool isDefaultTemplate;
+    bool addResistance;
+    bool addStability;
+
+    GolemTemplate() :
+        name("Unnamed Template"),
+        isQuickDps(false),
+        isAlacDps(false),
+        environmentDamage(false),
+        envDamageLevel(ENV_MILD),
+        skipSlow(false),
+        skipBurning(false),
+        fiveBleedingStacks(false),
+        hitboxType(HITBOX_SMALL),
+        isDefaultTemplate(false),
+        addResistance(false),
+        addStability(false) {
+    }
+};
+
 struct GolemHelperState {
     bool enabled = false;
-    bool boonsEnabled = true;
-    bool golemEnabled = true;
     bool isQuickDps = false;
     bool isAlacDps = false;
     bool environmentDamage = false;
@@ -29,6 +59,10 @@ struct GolemHelperState {
     bool showUI = false;
     bool showAdvanced = false;
     bool showTimingSettings = false;
+    bool showBoonAdvanced = false;
+    bool addResistance = false;
+    bool addStability = false;
+    bool alwaysHideIcon = false;
     int debugCounter = 0;
 
     int initialDelay = 390;
@@ -36,6 +70,11 @@ struct GolemHelperState {
 
     bool quickAccessVisible = false;
     unsigned int lastMapID = 0;
+
+    std::vector<GolemTemplate> templates;
+    int selectedTemplateIndex = -1;
+    int lastUserTemplateIndex = -1;
+    char newTemplateName[64] = "";
 };
 
 struct MenuCoordinates {
@@ -68,4 +107,9 @@ struct MenuCoordinates {
     int healerStepY[10] = {
         262, 352, 352, 262, 262, 500, 450, 450, 305, 262
     };
+
+    int resistanceX = 830;
+    int resistanceY = 354;
+    int stabilityX = 830;
+    int stabilityY = 400;
 };

@@ -111,6 +111,9 @@
     <ClInclude Include="Utils\MapUtils.h">
       <Filter>Utils</Filter>
     </ClInclude>
+    <ClInclude Include="Config\TemplateManager.h">
+      <Filter>Config</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -160,6 +163,9 @@
     </ClCompile>
     <ClCompile Include="Utils\MapUtils.cpp">
       <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="Config\TemplateManager.cpp">
+      <Filter>Config</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

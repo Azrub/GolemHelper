@@ -4,6 +4,7 @@
 #include "Utils/FileUtils.h"
 #include "Utils/MapUtils.h"
 #include "Config/ConfigManager.h"
+#include "Config/TemplateManager.h"
 #include "UI/UIManager.h"
 #include "Input/KeybindManager.h"
 #include "Dependencies/imgui/imgui.h"
@@ -21,6 +22,7 @@ void Load(AddonAPI* aApi) {
     g_state.enabled = true;
 
     ConfigManager::LoadCustomDelaySettings();
+    TemplateManager::LoadTemplates();
     FileUtils::CopyResourceIcons();
 
     g_api->Renderer.Register(ERenderType_Render, UIManager::RenderUI);
@@ -33,7 +35,7 @@ void Load(AddonAPI* aApi) {
 
     MapUtils::UpdateQuickAccessVisibility();
 
-    g_api->Log(ELogLevel_INFO, "GolemHelper", "=== GolemHelper v1.3.0.0 Loaded ===");
+    g_api->Log(ELogLevel_INFO, "GolemHelper", "=== GolemHelper v1.4.0.0 Loaded ===");
     g_api->Log(ELogLevel_INFO, "GolemHelper", "<c=#00ff00>GolemHelper addon</c> loaded successfully!");
 }
 
@@ -60,7 +62,7 @@ extern "C" __declspec(dllexport) AddonDefinition* GetAddonDef() {
     def.Signature = -424248;
     def.APIVersion = NEXUS_API_VERSION;
     def.Name = "GolemHelper";
-    def.Version = { 1, 3, 0, 0 };
+    def.Version = { 1, 4, 0, 0 };
     def.Author = "Azrub";
     def.Description = "Automates the process of setting optimal boon and golem configurations in the training area";
     def.Load = Load;

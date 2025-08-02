@@ -146,6 +146,7 @@
     <ClInclude Include="Common\Globals.h" />
     <ClInclude Include="Common\Types.h" />
     <ClInclude Include="Config\ConfigManager.h" />
+    <ClInclude Include="Config\TemplateManager.h" />
     <ClInclude Include="Dependencies\imgui\imconfig.h" />
     <ClInclude Include="Dependencies\imgui\imgui.h" />
     <ClInclude Include="Dependencies\imgui\imgui_internal.h" />
@@ -168,6 +169,7 @@
     <ClCompile Include="Automation\CoordinateUtils.cpp" />
     <ClCompile Include="Common\Globals.cpp" />
     <ClCompile Include="Config\ConfigManager.cpp" />
+    <ClCompile Include="Config\TemplateManager.cpp" />
     <ClCompile Include="Dependencies\imgui\imgui.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
