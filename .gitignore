@@ -56,7 +56,6 @@
 
 # Visual Studio additional files
 *.vcxproj.user
-*.vcxproj.filters
 *.sdf
 *.opensdf
 *.db
