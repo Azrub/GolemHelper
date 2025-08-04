@@ -17,7 +17,7 @@ void UIManager::RenderUI() {
 
     if (ImGui::Begin("GolemHelper", &g_state.showUI, ImGuiWindowFlags_AlwaysAutoResize)) {
 
-        ImGui::TextColored(ImVec4(0.2f, 0.8f, 1.0f, 1.0f), "GolemHelper v1.4.0.0");
+        ImGui::TextColored(ImVec4(0.2f, 0.8f, 1.0f, 1.0f), "GolemHelper v1.4.1.0");
         ImGui::Separator();
 
         if (ImGui::BeginTabBar("GolemHelperTabs", ImGuiTabBarFlags_None)) {
@@ -44,7 +44,8 @@ void UIManager::RenderUI() {
                         temp.fiveBleedingStacks == g_state.fiveBleedingStacks &&
                         temp.hitboxType == g_state.hitboxType &&
                         temp.addResistance == g_state.addResistance &&
-                        temp.addStability == g_state.addStability) {
+                        temp.addStability == g_state.addStability &&
+                        temp.skipAegis == g_state.skipAegis) {
                         currentTemplateName = temp.name;
                         foundMatchingTemplate = true;
                         break;
@@ -123,6 +124,7 @@ void UIManager::RenderSettingsTab() {
     if (g_state.showBoonAdvanced && !g_state.environmentDamage) {
         ImGui::Checkbox("Add Resistance", &g_state.addResistance);
         ImGui::Checkbox("Add Stability", &g_state.addStability);
+        ImGui::Checkbox("Skip Aegis", &g_state.skipAegis);
     }
 
     ImGui::Spacing();
@@ -355,10 +357,11 @@ void UIManager::RenderTemplatesTab() {
                 ImGui::Text("Conditions: %s", conditions.c_str());
             }
 
-            if (selectedTemplate.addResistance || selectedTemplate.addStability) {
+            if (selectedTemplate.addResistance || selectedTemplate.addStability || selectedTemplate.skipAegis) {
                 std::string boonSettings;
                 if (selectedTemplate.addResistance) boonSettings += "Resistance, ";
                 if (selectedTemplate.addStability) boonSettings += "Stability, ";
+                if (selectedTemplate.skipAegis) boonSettings += "Skip Aegis, ";
                 if (!boonSettings.empty()) {
                     boonSettings.pop_back();
                     boonSettings.pop_back();
@@ -425,6 +428,7 @@ void UIManager::RenderOptions() {
         g_state.showBoonAdvanced = false;
         g_state.addResistance = false;
         g_state.addStability = false;
+        g_state.skipAegis = false;
         g_state.stepDelay = 290;
         g_state.initialDelay = 390;
         g_state.alwaysHideIcon = false;

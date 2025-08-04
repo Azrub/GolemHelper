@@ -79,6 +79,9 @@ void TemplateManager::LoadTemplates() {
             else if (key == "addStability") {
                 currentTemplate.addStability = (value == "1");
             }
+            else if (key == "skipAegis") {
+                currentTemplate.skipAegis = (value == "1");
+            }
         }
 
         if (inTemplate && !currentTemplate.name.empty()) {
@@ -130,7 +133,8 @@ void TemplateManager::SaveTemplates() {
                 file << "fiveBleedingStacks=" << (temp.fiveBleedingStacks ? "1" : "0") << "\n";
                 file << "hitboxType=" << temp.hitboxType << "\n";
                 file << "addResistance=" << (temp.addResistance ? "1" : "0") << "\n";
-                file << "addStability=" << (temp.addStability ? "1" : "0") << "\n\n";
+                file << "addStability=" << (temp.addStability ? "1" : "0") << "\n";
+                file << "skipAegis=" << (temp.skipAegis ? "1" : "0") << "\n\n";
                 savedCount++;
             }
         }
@@ -226,6 +230,7 @@ GolemTemplate TemplateManager::CreateTemplateFromCurrentSettings() {
     temp.hitboxType = g_state.hitboxType;
     temp.addResistance = g_state.addResistance;
     temp.addStability = g_state.addStability;
+    temp.skipAegis = g_state.skipAegis;
     temp.isDefaultTemplate = false;
     return temp;
 }
@@ -241,6 +246,7 @@ void TemplateManager::ApplyTemplateToSettings(const GolemTemplate& temp) {
     g_state.hitboxType = temp.hitboxType;
     g_state.addResistance = temp.addResistance;
     g_state.addStability = temp.addStability;
+    g_state.skipAegis = temp.skipAegis;
 
     if (temp.isDefaultTemplate) {
         g_state.showAdvanced = false;
@@ -250,7 +256,7 @@ void TemplateManager::ApplyTemplateToSettings(const GolemTemplate& temp) {
         if (temp.skipSlow || temp.skipBurning || temp.fiveBleedingStacks) {
             g_state.showAdvanced = true;
         }
-        if (temp.addResistance || temp.addStability) {
+        if (temp.addResistance || temp.addStability || temp.skipAegis) {
             g_state.showBoonAdvanced = true;
         }
     }

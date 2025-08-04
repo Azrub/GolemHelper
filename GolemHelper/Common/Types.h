@@ -28,6 +28,7 @@ struct GolemTemplate {
     bool isDefaultTemplate;
     bool addResistance;
     bool addStability;
+    bool skipAegis;
 
     GolemTemplate() :
         name("Unnamed Template"),
@@ -41,7 +42,8 @@ struct GolemTemplate {
         hitboxType(HITBOX_SMALL),
         isDefaultTemplate(false),
         addResistance(false),
-        addStability(false) {
+        addStability(false),
+        skipAegis(false) {
     }
 };
 
@@ -62,6 +64,7 @@ struct GolemHelperState {
     bool showBoonAdvanced = false;
     bool addResistance = false;
     bool addStability = false;
+    bool skipAegis = false;
     bool alwaysHideIcon = false;
     int debugCounter = 0;
 

@@ -13,6 +13,10 @@ bool AutomationLogic::ShouldSkipBoonStep(int stepIndex) {
         return true;
     }
 
+    if (g_state.showBoonAdvanced && g_state.skipAegis && stepIndex == 10) {
+        return true;
+    }
+
     return false;
 }
 
@@ -120,10 +124,11 @@ void AutomationLogic::ApplyAllBoons() {
     }
 
     std::string advancedBoons = "";
-    if (g_state.showBoonAdvanced && (g_state.addResistance || g_state.addStability)) {
+    if (g_state.showBoonAdvanced && (g_state.addResistance || g_state.addStability || g_state.skipAegis)) {
         advancedBoons = " + ";
         if (g_state.addResistance) advancedBoons += "Resistance ";
         if (g_state.addStability) advancedBoons += "Stability ";
+        if (g_state.skipAegis) advancedBoons += "Skip Aegis ";
         advancedBoons.pop_back();
     }
 
