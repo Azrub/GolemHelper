@@ -25,11 +25,15 @@ bool AutomationLogic::ShouldSkipGolemStep(int stepIndex) {
         return false;
     }
 
-    if (g_state.skipSlow && stepIndex == 17) {
+    if (g_state.skipBurning && stepIndex == 7) {
         return true;
     }
 
-    if (g_state.skipBurning && stepIndex == 7) {
+    if (g_state.skipConfusion && stepIndex == 8) {
+        return true;
+    }
+
+    if (g_state.skipSlow && stepIndex == 17) {
         return true;
     }
 
@@ -78,8 +82,6 @@ void AutomationLogic::ApplyHealerBoons() {
                 CoordinateUtils::ClickAtScaled(830, alacStepY[i], g_state.stepDelay);
             }
         }
-
-        g_api->Log(ELogLevel_INFO, "GolemHelper", "Applying Environment Damage final click");
 
         int finalY;
         switch (g_state.envDamageLevel) {
@@ -153,12 +155,10 @@ void AutomationLogic::ApplyAllBoons() {
                 CoordinateUtils::ClickAtScaled(g_coords.boonStepX[i], g_coords.boonStepY[i], g_state.stepDelay);
 
                 if (g_state.showBoonAdvanced && g_state.addResistance) {
-                    g_api->Log(ELogLevel_INFO, "GolemHelper", "Adding Resistance");
                     CoordinateUtils::ClickAtScaled(g_coords.resistanceX, g_coords.resistanceY, g_state.stepDelay);
                 }
 
                 if (g_state.showBoonAdvanced && g_state.addStability) {
-                    g_api->Log(ELogLevel_INFO, "GolemHelper", "Adding Stability");
                     CoordinateUtils::ClickAtScaled(g_coords.stabilityX, g_coords.stabilityY, g_state.stepDelay);
                 }
 
@@ -192,23 +192,27 @@ void AutomationLogic::ApplyGolemSettings() {
         g_state.hitboxType == HITBOX_MEDIUM ? "Medium Hitbox" : "Large Hitbox";
 
     std::string modifiers = "Normal";
-    if (g_state.showAdvanced && (g_state.skipSlow || g_state.skipBurning || g_state.fiveBleedingStacks)) {
+    if (g_state.showAdvanced && (g_state.skipBurning || g_state.skipConfusion || g_state.skipSlow ||
+        g_state.addImmobilize || g_state.addBlind || g_state.fiveBleedingStacks)) {
         modifiers = "";
-        if (g_state.skipSlow) modifiers += "Skip Slow ";
         if (g_state.skipBurning) modifiers += "Skip Burning ";
+        if (g_state.skipConfusion) modifiers += "Skip Confusion ";
+        if (g_state.skipSlow) modifiers += "Skip Slow ";
+        if (g_state.addImmobilize) modifiers += "Add Immobilize ";
+        if (g_state.addBlind) modifiers += "Add Blind ";
         if (g_state.fiveBleedingStacks) modifiers += "5 Bleeding ";
         if (!modifiers.empty()) modifiers.pop_back();
     }
 
     char startBuffer[400];
-    sprintf_s(startBuffer, "Starting golem settings sequence (25 steps) - Modifiers: %s, Hitbox: %s", modifiers.c_str(), hitbox);
+    sprintf_s(startBuffer, "Starting golem settings sequence (24 steps) - Modifiers: %s, Hitbox: %s", modifiers.c_str(), hitbox);
     g_api->Log(ELogLevel_INFO, "GolemHelper", startBuffer);
 
     try {
         g_api->GameBinds.InvokeAsync(EGameBinds_MiscInteract, 50);
         Sleep(g_state.initialDelay);
 
-        for (int i = 0; i < 25; i++) {
+        for (int i = 0; i < 24; i++) {
             if (g_coords.golemStepX[i] == 0 && g_coords.golemStepY[i] == 0) {
                 continue;
             }
@@ -234,13 +238,31 @@ void AutomationLogic::ApplyGolemSettings() {
                 }
             }
 
-            int delay = (i == 24) ? 50 : g_state.stepDelay;
+            int delay = (i == 23) ? 50 : g_state.stepDelay;
+
+            if (i == 14) {
+                CoordinateUtils::ClickAtScaled(currentX, currentY, delay);
+
+                if (g_state.showAdvanced && g_state.addImmobilize) {
+                    CoordinateUtils::ClickAtScaled(g_coords.immobilizeX, g_coords.immobilizeY, g_state.stepDelay);
+                }
+
+                continue;
+            }
+
+            if (i == 16) {
+                CoordinateUtils::ClickAtScaled(currentX, currentY, delay);
+
+                if (g_state.showAdvanced && g_state.addBlind) {
+                    CoordinateUtils::ClickAtScaled(g_coords.blindX, g_coords.blindY, g_state.stepDelay);
+                }
+
+                continue;
+            }
 
             CoordinateUtils::ClickAtScaled(currentX, currentY, delay);
 
             if (g_state.showAdvanced && g_state.fiveBleedingStacks && i == 6) {
-                g_api->Log(ELogLevel_INFO, "GolemHelper", "5 Bleeding Stacks - repeating 7th step 4 more times");
-
                 for (int repeat = 0; repeat < 4; repeat++) {
                     CoordinateUtils::ClickAtScaled(currentX, currentY, g_state.stepDelay);
                 }
@@ -255,5 +277,5 @@ void AutomationLogic::ApplyGolemSettings() {
         g_state.showUI = true;
     }
 
-    g_api->Log(ELogLevel_INFO, "GolemHelper", "Golem settings sequence completed (25 steps)!");
+    g_api->Log(ELogLevel_INFO, "GolemHelper", "Golem settings sequence completed (24 steps)!");
 }

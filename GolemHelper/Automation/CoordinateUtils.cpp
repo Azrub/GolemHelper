@@ -6,8 +6,6 @@
 void CoordinateUtils::GetScaledCoordinates(int baseX, int baseY, int* scaledX, int* scaledY) {
     if (!g_api) return;
 
-    g_api->Log(ELogLevel_INFO, "GolemHelper", "GetScaledCoordinates CALLED");
-
     if (g_nexusLink && g_nexusLink->Width > 0 && g_nexusLink->Height > 0) {
         float uiScale = g_nexusLink->Scaling;
         float dpiScaleX, dpiScaleY;
@@ -68,11 +66,6 @@ void CoordinateUtils::GetScaledCoordinates(int baseX, int baseY, int* scaledX, i
             g_api->Log(ELogLevel_INFO, "GolemHelper", normalBuffer);
         }
 
-        char valuesBuffer[250];
-        sprintf_s(valuesBuffer, "GetScaled INPUT: uiScale=%.3f, scaleX=%.3f, scaleY=%.3f, base=%d,%d",
-            uiScale, dpiScaleX, dpiScaleY, baseX, baseY);
-        g_api->Log(ELogLevel_INFO, "GolemHelper", valuesBuffer);
-
         int scaledForResolutionX = (int)(baseX * dpiScaleX);
         int scaledForResolutionY = (int)(baseY * dpiScaleY);
 
@@ -94,22 +87,11 @@ void CoordinateUtils::GetScaledCoordinates(int baseX, int baseY, int* scaledX, i
             else if (uiScale >= 1.21f && uiScale <= 1.25f) {
                 finalX = scaledForResolutionX - (int)(scaledForResolutionX * 0.097f);
                 finalY = scaledForResolutionY + (int)(scaledForResolutionY * 0.206f);
-                g_api->Log(ELogLevel_INFO, "GolemHelper", "APPLIED LARGER UI OFFSET");
-            }
-            else {
-                char buffer[100];
-                sprintf_s(buffer, "NO UI OFFSET - uiScale %.3f", uiScale);
-                g_api->Log(ELogLevel_INFO, "GolemHelper", buffer);
             }
         }
 
         *scaledX = finalX;
         *scaledY = finalY;
-
-        char resultBuffer[250];
-        sprintf_s(resultBuffer, "GetScaled RESULT: base=%d,%d -> scaled=%d,%d -> final=%d,%d",
-            baseX, baseY, scaledForResolutionX, scaledForResolutionY, finalX, finalY);
-        g_api->Log(ELogLevel_INFO, "GolemHelper", resultBuffer);
     }
     else {
         g_api->Log(ELogLevel_WARNING, "GolemHelper", "GetScaledCoordinates - Nexus data not available");
@@ -150,6 +132,13 @@ void CoordinateUtils::DebugMousePosition() {
 }
 
 void CoordinateUtils::ClickAtScaled(int baseX, int baseY, int delay) {
+    if (g_mumbleData && !g_mumbleData->Context.IsGameFocused) {
+        if (g_api) {
+            g_api->Log(ELogLevel_WARNING, "GolemHelper", "Sequence stopped - Game lost focus");
+        }
+        return;
+    }
+
     HWND gameWindow = GetForegroundWindow();
     if (!gameWindow) return;
 

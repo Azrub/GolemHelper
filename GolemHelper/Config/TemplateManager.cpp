@@ -61,11 +61,20 @@ void TemplateManager::LoadTemplates() {
             else if (key == "envDamageLevel") {
                 currentTemplate.envDamageLevel = (EnvironmentDamageLevel)std::stoi(value);
             }
+            else if (key == "skipBurning") {
+                currentTemplate.skipBurning = (value == "1");
+            }
+            else if (key == "skipConfusion") {
+                currentTemplate.skipConfusion = (value == "1");
+            }
             else if (key == "skipSlow") {
                 currentTemplate.skipSlow = (value == "1");
             }
-            else if (key == "skipBurning") {
-                currentTemplate.skipBurning = (value == "1");
+            else if (key == "addImmobilize") {
+                currentTemplate.addImmobilize = (value == "1");
+            }
+            else if (key == "addBlind") {
+                currentTemplate.addBlind = (value == "1");
             }
             else if (key == "fiveBleedingStacks") {
                 currentTemplate.fiveBleedingStacks = (value == "1");
@@ -128,8 +137,11 @@ void TemplateManager::SaveTemplates() {
                 file << "isAlacDps=" << (temp.isAlacDps ? "1" : "0") << "\n";
                 file << "environmentDamage=" << (temp.environmentDamage ? "1" : "0") << "\n";
                 file << "envDamageLevel=" << temp.envDamageLevel << "\n";
-                file << "skipSlow=" << (temp.skipSlow ? "1" : "0") << "\n";
                 file << "skipBurning=" << (temp.skipBurning ? "1" : "0") << "\n";
+                file << "skipConfusion=" << (temp.skipConfusion ? "1" : "0") << "\n";
+                file << "skipSlow=" << (temp.skipSlow ? "1" : "0") << "\n";
+                file << "addImmobilize=" << (temp.addImmobilize ? "1" : "0") << "\n";
+                file << "addBlind=" << (temp.addBlind ? "1" : "0") << "\n";
                 file << "fiveBleedingStacks=" << (temp.fiveBleedingStacks ? "1" : "0") << "\n";
                 file << "hitboxType=" << temp.hitboxType << "\n";
                 file << "addResistance=" << (temp.addResistance ? "1" : "0") << "\n";
@@ -224,8 +236,11 @@ GolemTemplate TemplateManager::CreateTemplateFromCurrentSettings() {
     temp.isAlacDps = g_state.isAlacDps;
     temp.environmentDamage = g_state.environmentDamage;
     temp.envDamageLevel = g_state.envDamageLevel;
-    temp.skipSlow = g_state.skipSlow;
     temp.skipBurning = g_state.skipBurning;
+    temp.skipConfusion = g_state.skipConfusion;
+    temp.skipSlow = g_state.skipSlow;
+    temp.addImmobilize = g_state.addImmobilize;
+    temp.addBlind = g_state.addBlind;
     temp.fiveBleedingStacks = g_state.fiveBleedingStacks;
     temp.hitboxType = g_state.hitboxType;
     temp.addResistance = g_state.addResistance;
@@ -240,8 +255,11 @@ void TemplateManager::ApplyTemplateToSettings(const GolemTemplate& temp) {
     g_state.isAlacDps = temp.isAlacDps;
     g_state.environmentDamage = temp.environmentDamage;
     g_state.envDamageLevel = temp.envDamageLevel;
-    g_state.skipSlow = temp.skipSlow;
     g_state.skipBurning = temp.skipBurning;
+    g_state.skipConfusion = temp.skipConfusion;
+    g_state.skipSlow = temp.skipSlow;
+    g_state.addImmobilize = temp.addImmobilize;
+    g_state.addBlind = temp.addBlind;
     g_state.fiveBleedingStacks = temp.fiveBleedingStacks;
     g_state.hitboxType = temp.hitboxType;
     g_state.addResistance = temp.addResistance;
@@ -253,7 +271,8 @@ void TemplateManager::ApplyTemplateToSettings(const GolemTemplate& temp) {
         g_state.showBoonAdvanced = false;
     }
     else {
-        if (temp.skipSlow || temp.skipBurning || temp.fiveBleedingStacks) {
+        if (temp.skipBurning || temp.skipConfusion || temp.skipSlow ||
+            temp.addImmobilize || temp.addBlind || temp.fiveBleedingStacks) {
             g_state.showAdvanced = true;
         }
         if (temp.addResistance || temp.addStability || temp.skipAegis) {

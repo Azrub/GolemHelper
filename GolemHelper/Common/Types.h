@@ -21,8 +21,11 @@ struct GolemTemplate {
     bool isAlacDps;
     bool environmentDamage;
     EnvironmentDamageLevel envDamageLevel;
-    bool skipSlow;
     bool skipBurning;
+    bool skipConfusion;
+    bool skipSlow;
+    bool addImmobilize;
+    bool addBlind;
     bool fiveBleedingStacks;
     HitboxType hitboxType;
     bool isDefaultTemplate;
@@ -36,8 +39,11 @@ struct GolemTemplate {
         isAlacDps(false),
         environmentDamage(false),
         envDamageLevel(ENV_MILD),
-        skipSlow(false),
         skipBurning(false),
+        skipConfusion(false),
+        skipSlow(false),
+        addImmobilize(false),
+        addBlind(false),
         fiveBleedingStacks(false),
         hitboxType(HITBOX_SMALL),
         isDefaultTemplate(false),
@@ -53,8 +59,11 @@ struct GolemHelperState {
     bool isAlacDps = false;
     bool environmentDamage = false;
     EnvironmentDamageLevel envDamageLevel = ENV_MILD;
-    bool skipSlow = false;
     bool skipBurning = false;
+    bool skipConfusion = false;
+    bool skipSlow = false;
+    bool addImmobilize = false;
+    bool addBlind = false;
     bool fiveBleedingStacks = false;
     HitboxType hitboxType = HITBOX_SMALL;
     bool debugMode = false;
@@ -81,16 +90,16 @@ struct GolemHelperState {
 };
 
 struct MenuCoordinates {
-    int golemStepX[25] = {
+    int golemStepX[24] = {
         830, 830, 830, 830, 830, 830, 830, 830, 830, 830,
         830, 830, 830, 830, 830, 830, 830, 830, 830, 830,
-        830, 830, 830, 830, 830
+        830, 830, 830, 830
     };
 
-    int golemStepY[25] = {
+    int golemStepY[24] = {
         260, 260, 306, 257, 257, 306, 257, 306, 352, 400,
         454, 508, 352, 257, 306, 454, 400, 306, 352, 400,
-        454, 400, 454, 454, 548
+        454, 454, 454, 548
     };
 
     int boonStepX[20] = {
@@ -110,6 +119,11 @@ struct MenuCoordinates {
     int healerStepY[10] = {
         262, 352, 352, 262, 262, 500, 450, 450, 305, 262
     };
+
+    int immobilizeX = 830;
+    int immobilizeY = 400;
+    int blindX = 830;
+    int blindY = 260;
 
     int resistanceX = 830;
     int resistanceY = 354;

@@ -17,7 +17,7 @@ void UIManager::RenderUI() {
 
     if (ImGui::Begin("GolemHelper", &g_state.showUI, ImGuiWindowFlags_AlwaysAutoResize)) {
 
-        ImGui::TextColored(ImVec4(0.2f, 0.8f, 1.0f, 1.0f), "GolemHelper v1.4.1.0");
+        ImGui::TextColored(ImVec4(0.2f, 0.8f, 1.0f, 1.0f), "GolemHelper v1.5.0.0");
         ImGui::Separator();
 
         if (ImGui::BeginTabBar("GolemHelperTabs", ImGuiTabBarFlags_None)) {
@@ -29,7 +29,7 @@ void UIManager::RenderUI() {
 
             if (ImGui::BeginTabItem("Templates")) {
                 ImGui::SameLine();
-                ImGui::SetCursorPosX(ImGui::GetWindowWidth() - 160);
+                ImGui::SetCursorPosX(ImGui::GetWindowWidth() - 130);
 
                 std::string currentTemplateName = "None";
                 bool foundMatchingTemplate = false;
@@ -39,8 +39,11 @@ void UIManager::RenderUI() {
                         temp.isAlacDps == g_state.isAlacDps &&
                         temp.environmentDamage == g_state.environmentDamage &&
                         temp.envDamageLevel == g_state.envDamageLevel &&
-                        temp.skipSlow == g_state.skipSlow &&
                         temp.skipBurning == g_state.skipBurning &&
+                        temp.skipConfusion == g_state.skipConfusion &&
+                        temp.skipSlow == g_state.skipSlow &&
+                        temp.addImmobilize == g_state.addImmobilize &&
+                        temp.addBlind == g_state.addBlind &&
                         temp.fiveBleedingStacks == g_state.fiveBleedingStacks &&
                         temp.hitboxType == g_state.hitboxType &&
                         temp.addResistance == g_state.addResistance &&
@@ -55,10 +58,11 @@ void UIManager::RenderUI() {
                 ImGui::Text("Current: ");
                 ImGui::SameLine();
                 if (foundMatchingTemplate) {
-                    if (currentTemplateName.length() > 12) {
-                        currentTemplateName = currentTemplateName.substr(0, 9) + "...";
+                    std::string truncatedName = currentTemplateName;
+                    if (truncatedName.length() > 8) {
+                        truncatedName = truncatedName.substr(0, 6) + "..";
                     }
-                    ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "%s", currentTemplateName.c_str());
+                    ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "%s", truncatedName.c_str());
                 }
                 else {
                     ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "None");
@@ -79,7 +83,7 @@ void UIManager::RenderSettingsTab() {
     ImGui::Text("Boon Configuration");
 
     if (ImGui::Button("Apply Boons", ImVec2(150, 0))) {
-        if (g_state.enabled) {
+        if (g_state.enabled && MapUtils::IsInTrainingArea()) {
             g_api->InputBinds.Invoke("GolemHelper.ApplyBoons", false);
         }
     }
@@ -158,8 +162,8 @@ void UIManager::RenderSettingsTab() {
 
     ImGui::Text("Golem Configuration");
 
-    if (ImGui::Button("Apply Golem Settings", ImVec2(150, 0))) {
-        if (g_state.enabled) {
+    if (ImGui::Button("Spawn Golem", ImVec2(150, 0))) {
+        if (g_state.enabled && MapUtils::IsInTrainingArea()) {
             g_api->InputBinds.Invoke("GolemHelper.ApplyGolem", false);
         }
     }
@@ -184,8 +188,11 @@ void UIManager::RenderSettingsTab() {
     ImGui::Checkbox("Condition Settings", &g_state.showAdvanced);
 
     if (g_state.showAdvanced) {
-        ImGui::Checkbox("Skip Slow", &g_state.skipSlow);
         ImGui::Checkbox("Skip Burning", &g_state.skipBurning);
+        ImGui::Checkbox("Skip Confusion", &g_state.skipConfusion);
+        ImGui::Checkbox("Skip Slow", &g_state.skipSlow);
+        ImGui::Checkbox("Add Immobilize", &g_state.addImmobilize);
+        ImGui::Checkbox("Add Blind", &g_state.addBlind);
         ImGui::Checkbox("5 Bleeding Stacks", &g_state.fiveBleedingStacks);
     }
 
@@ -252,15 +259,31 @@ void UIManager::RenderSettingsTab() {
 }
 
 void UIManager::RenderTemplatesTab() {
+    if (ImGui::Button("Apply Boons", ImVec2(120, 30))) {
+        if (g_state.enabled && MapUtils::IsInTrainingArea()) {
+            g_api->InputBinds.Invoke("GolemHelper.ApplyBoons", false);
+        }
+    }
+    ImGui::SameLine();
+
+    if (ImGui::Button("Spawn Golem", ImVec2(120, 30))) {
+        if (g_state.enabled && MapUtils::IsInTrainingArea()) {
+            g_api->InputBinds.Invoke("GolemHelper.ApplyGolem", false);
+        }
+    }
+
+    ImGui::Spacing();
+    ImGui::Separator();
+
     ImGui::Text("Template Management");
     ImGui::Separator();
 
     ImGui::Text("Save Current Settings:");
-    ImGui::SetNextItemWidth(200);
+    ImGui::SetNextItemWidth(170);
     ImGui::InputText("##templateName", g_state.newTemplateName, sizeof(g_state.newTemplateName));
     ImGui::SameLine();
 
-    if (ImGui::Button("Save Template")) {
+    if (ImGui::Button("Save", ImVec2(50, 0))) {
         if (strlen(g_state.newTemplateName) > 0) {
             TemplateManager::SaveCurrentAsTemplate(std::string(g_state.newTemplateName));
             memset(g_state.newTemplateName, 0, sizeof(g_state.newTemplateName));
@@ -296,21 +319,21 @@ void UIManager::RenderTemplatesTab() {
             }
         }
 
-        ImGui::SetNextItemWidth(200);
+        ImGui::SetNextItemWidth(170);
         if (ImGui::Combo("##templateList", &currentUserIndex, userTemplateNames.data(), userTemplateNames.size())) {
             g_state.selectedTemplateIndex = userTemplateIndices[currentUserIndex];
             g_state.lastUserTemplateIndex = userTemplateIndices[currentUserIndex];
         }
 
         ImGui::SameLine();
-        if (ImGui::Button("Load")) {
+        if (ImGui::Button("Load", ImVec2(50, 0))) {
             if (currentUserIndex >= 0 && currentUserIndex < userTemplateIndices.size()) {
                 TemplateManager::LoadTemplate(userTemplateIndices[currentUserIndex]);
             }
         }
 
         ImGui::SameLine();
-        if (ImGui::Button("Delete")) {
+        if (ImGui::Button("Del", ImVec2(50, 0))) {
             if (currentUserIndex >= 0 && currentUserIndex < userTemplateIndices.size()) {
                 TemplateManager::DeleteTemplate(userTemplateIndices[currentUserIndex]);
                 g_state.selectedTemplateIndex = -1;
@@ -324,7 +347,12 @@ void UIManager::RenderTemplatesTab() {
 
             ImGui::Spacing();
             ImGui::Separator();
-            ImGui::Text("%s", selectedTemplate.name.c_str());
+
+            std::string displayName = selectedTemplate.name;
+            if (displayName.length() > 20) {
+                displayName = displayName.substr(0, 17) + "...";
+            }
+            ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "%s", displayName.c_str());
 
             std::string modeText = "Normal";
             if (selectedTemplate.isQuickDps) modeText = "Quick DPS";
@@ -345,28 +373,55 @@ void UIManager::RenderTemplatesTab() {
                 selectedTemplate.hitboxType == HITBOX_MEDIUM ? "Medium" : "Large";
             ImGui::Text("Hitbox: %s", hitboxName);
 
-            if (selectedTemplate.skipSlow || selectedTemplate.skipBurning || selectedTemplate.fiveBleedingStacks) {
-                std::string conditions;
-                if (selectedTemplate.skipSlow) conditions += "Skip Slow, ";
-                if (selectedTemplate.skipBurning) conditions += "Skip Burning, ";
-                if (selectedTemplate.fiveBleedingStacks) conditions += "5 Bleeding, ";
-                if (!conditions.empty()) {
-                    conditions.pop_back();
-                    conditions.pop_back();
+            if (selectedTemplate.skipBurning || selectedTemplate.skipConfusion || selectedTemplate.skipSlow ||
+                selectedTemplate.addImmobilize || selectedTemplate.addBlind || selectedTemplate.fiveBleedingStacks) {
+
+                ImGui::Text("Conditions:");
+                ImGui::Indent(15.0f);
+
+                std::vector<std::string> conditions;
+                if (selectedTemplate.skipBurning) conditions.push_back("Skip Burning");
+                if (selectedTemplate.skipConfusion) conditions.push_back("Skip Confusion");
+                if (selectedTemplate.skipSlow) conditions.push_back("Skip Slow");
+                if (selectedTemplate.addImmobilize) conditions.push_back("Add Immobilize");
+                if (selectedTemplate.addBlind) conditions.push_back("Add Blind");
+                if (selectedTemplate.fiveBleedingStacks) conditions.push_back("5 Bleeding");
+
+                std::string conditionsText = "";
+                for (int i = 0; i < conditions.size(); i++) {
+                    if (i > 0 && i % 2 != 0) conditionsText += ", ";
+                    conditionsText += conditions[i];
+
+                    if ((i + 1) % 2 == 0 || i == conditions.size() - 1) {
+                        ImGui::TextUnformatted(conditionsText.c_str());
+                        conditionsText = "";
+                    }
                 }
-                ImGui::Text("Conditions: %s", conditions.c_str());
+
+                ImGui::Unindent(15.0f);
             }
 
             if (selectedTemplate.addResistance || selectedTemplate.addStability || selectedTemplate.skipAegis) {
-                std::string boonSettings;
-                if (selectedTemplate.addResistance) boonSettings += "Resistance, ";
-                if (selectedTemplate.addStability) boonSettings += "Stability, ";
-                if (selectedTemplate.skipAegis) boonSettings += "Skip Aegis, ";
-                if (!boonSettings.empty()) {
-                    boonSettings.pop_back();
-                    boonSettings.pop_back();
+                ImGui::Text("Boon Settings:");
+                ImGui::Indent(15.0f);
+
+                std::vector<std::string> boonSettings;
+                if (selectedTemplate.addResistance) boonSettings.push_back("Add Resistance");
+                if (selectedTemplate.addStability) boonSettings.push_back("Add Stability");
+                if (selectedTemplate.skipAegis) boonSettings.push_back("Skip Aegis");
+
+                std::string boonText = "";
+                for (int i = 0; i < boonSettings.size(); i++) {
+                    if (i > 0 && i % 2 != 0) boonText += ", ";
+                    boonText += boonSettings[i];
+
+                    if ((i + 1) % 2 == 0 || i == boonSettings.size() - 1) {
+                        ImGui::TextUnformatted(boonText.c_str());
+                        boonText = "";
+                    }
                 }
-                ImGui::Text("Boon Settings: %s", boonSettings.c_str());
+
+                ImGui::Unindent(15.0f);
             }
         }
     }
@@ -378,11 +433,12 @@ void UIManager::RenderTemplatesTab() {
 
     std::vector<std::string> defaultNames = { "DPS", "Quick DPS", "Alac DPS", "qHeal", "aHeal" };
 
-    for (const std::string& name : defaultNames) {
+    for (int i = 0; i < 3; i++) {
+        const std::string& name = defaultNames[i];
         int templateIndex = -1;
-        for (int i = 0; i < g_state.templates.size(); i++) {
-            if (g_state.templates[i].name == name && g_state.templates[i].isDefaultTemplate) {
-                templateIndex = i;
+        for (int j = 0; j < g_state.templates.size(); j++) {
+            if (g_state.templates[j].name == name && g_state.templates[j].isDefaultTemplate) {
+                templateIndex = j;
                 break;
             }
         }
@@ -392,10 +448,26 @@ void UIManager::RenderTemplatesTab() {
                 TemplateManager::LoadTemplate(templateIndex);
                 g_state.selectedTemplateIndex = -1;
             }
+            if (i < 2) ImGui::SameLine();
+        }
+    }
 
-            if (name != "Alac DPS" && name != "aHeal") {
-                ImGui::SameLine();
+    for (int i = 3; i < 5; i++) {
+        const std::string& name = defaultNames[i];
+        int templateIndex = -1;
+        for (int j = 0; j < g_state.templates.size(); j++) {
+            if (g_state.templates[j].name == name && g_state.templates[j].isDefaultTemplate) {
+                templateIndex = j;
+                break;
             }
+        }
+
+        if (templateIndex >= 0) {
+            if (ImGui::Button(name.c_str(), ImVec2(80, 0))) {
+                TemplateManager::LoadTemplate(templateIndex);
+                g_state.selectedTemplateIndex = -1;
+            }
+            if (i == 3) ImGui::SameLine();
         }
     }
 }
@@ -419,8 +491,11 @@ void UIManager::RenderOptions() {
         g_state.isAlacDps = false;
         g_state.environmentDamage = false;
         g_state.envDamageLevel = ENV_MILD;
-        g_state.skipSlow = false;
         g_state.skipBurning = false;
+        g_state.skipConfusion = false;
+        g_state.skipSlow = false;
+        g_state.addImmobilize = false;
+        g_state.addBlind = false;
         g_state.fiveBleedingStacks = false;
         g_state.hitboxType = HITBOX_SMALL;
         g_state.showAdvanced = false;
@@ -460,10 +535,14 @@ void UIManager::RenderOptions() {
     ImGui::Text("- Boons: %s", boonMode.c_str());
 
     std::string golemMods = "Normal";
-    if (g_state.showAdvanced && (g_state.skipSlow || g_state.skipBurning || g_state.fiveBleedingStacks)) {
+    if (g_state.showAdvanced && (g_state.skipBurning || g_state.skipConfusion || g_state.skipSlow ||
+        g_state.addImmobilize || g_state.addBlind || g_state.fiveBleedingStacks)) {
         golemMods = "";
-        if (g_state.skipSlow) golemMods += "Skip Slow ";
         if (g_state.skipBurning) golemMods += "Skip Burning ";
+        if (g_state.skipConfusion) golemMods += "Skip Confusion ";
+        if (g_state.skipSlow) golemMods += "Skip Slow ";
+        if (g_state.addImmobilize) golemMods += "Add Immobilize ";
+        if (g_state.addBlind) golemMods += "Add Blind ";
         if (g_state.fiveBleedingStacks) golemMods += "5 Bleeding ";
         if (!golemMods.empty()) golemMods.pop_back();
     }
