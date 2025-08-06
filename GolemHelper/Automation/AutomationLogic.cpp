@@ -205,14 +205,14 @@ void AutomationLogic::ApplyGolemSettings() {
     }
 
     char startBuffer[400];
-    sprintf_s(startBuffer, "Starting golem settings sequence (24 steps) - Modifiers: %s, Hitbox: %s", modifiers.c_str(), hitbox);
+    sprintf_s(startBuffer, "Starting golem settings sequence (25 steps) - Modifiers: %s, Hitbox: %s", modifiers.c_str(), hitbox);
     g_api->Log(ELogLevel_INFO, "GolemHelper", startBuffer);
 
     try {
         g_api->GameBinds.InvokeAsync(EGameBinds_MiscInteract, 50);
         Sleep(g_state.initialDelay);
 
-        for (int i = 0; i < 24; i++) {
+        for (int i = 0; i < 25; i++) {
             if (g_coords.golemStepX[i] == 0 && g_coords.golemStepY[i] == 0) {
                 continue;
             }
@@ -238,7 +238,7 @@ void AutomationLogic::ApplyGolemSettings() {
                 }
             }
 
-            int delay = (i == 23) ? 50 : g_state.stepDelay;
+            int delay = (i == 24) ? 50 : g_state.stepDelay;
 
             if (i == 14) {
                 CoordinateUtils::ClickAtScaled(currentX, currentY, delay);
@@ -277,5 +277,5 @@ void AutomationLogic::ApplyGolemSettings() {
         g_state.showUI = true;
     }
 
-    g_api->Log(ELogLevel_INFO, "GolemHelper", "Golem settings sequence completed (24 steps)!");
+    g_api->Log(ELogLevel_INFO, "GolemHelper", "Golem settings sequence completed (25 steps)!");
 }
