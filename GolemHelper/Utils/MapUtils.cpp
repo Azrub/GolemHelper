@@ -51,4 +51,18 @@ void MapUtils::UpdateQuickAccessVisibility() {
             }
         }
     }
+
+    if (g_state.autoShowHideUI) {
+        bool inTrainingArea = IsInTrainingArea();
+        static bool wasInTrainingArea = false;
+
+        if (inTrainingArea && !wasInTrainingArea) {
+            g_state.showUI = true;
+        }
+        else if (!inTrainingArea && wasInTrainingArea) {
+            g_state.showUI = false;
+        }
+
+        wasInTrainingArea = inTrainingArea;
+    }
 }

@@ -2,18 +2,21 @@
 #include <string>
 #include "AutomationLogic.h"
 #include "../Common/Globals.h"
+#include "../Common/MenuSequences.h"
 #include "CoordinateUtils.h"
 
 bool AutomationLogic::ShouldSkipBoonStep(int stepIndex) {
-    if (g_state.isQuickDps && stepIndex == 14) {
+    MenuOption step = MenuSequences::BOON_SEQUENCE[stepIndex];
+
+    if (g_state.isQuickDps && step == BOON_QUICKNESS) {
         return true;
     }
 
-    if (g_state.isAlacDps && (stepIndex == 13 || stepIndex == 18)) {
+    if (g_state.isAlacDps && step == BOON_ALACRITY) {
         return true;
     }
 
-    if (g_state.showBoonAdvanced && g_state.skipAegis && stepIndex == 10) {
+    if (g_state.showBoonAdvanced && g_state.skipAegis && step == BOON_AEGIS) {
         return true;
     }
 
@@ -25,15 +28,17 @@ bool AutomationLogic::ShouldSkipGolemStep(int stepIndex) {
         return false;
     }
 
-    if (g_state.skipBurning && stepIndex == 7) {
+    MenuOption step = MenuSequences::GOLEM_SEQUENCE[stepIndex];
+
+    if (g_state.skipBurning && step == GOLEM_BURNING) {
         return true;
     }
 
-    if (g_state.skipConfusion && stepIndex == 8) {
+    if (g_state.skipConfusion && step == GOLEM_CONFUSION) {
         return true;
     }
 
-    if (g_state.skipSlow && stepIndex == 17) {
+    if (g_state.skipSlow && step == GOLEM_SLOW) {
         return true;
     }
 
@@ -50,10 +55,10 @@ void AutomationLogic::ApplyHealerBoons() {
 
     std::string mode = "Healer Bench - ";
     if (g_state.isQuickDps) {
-        mode += "Quick DPS (Healer provides Alacrity)";
+        mode += "Quick DPS";
     }
     else if (g_state.isAlacDps) {
-        mode += "Alac DPS (Healer provides Quickness)";
+        mode += "Alac DPS";
     }
 
     mode += " + Environment ";
@@ -71,27 +76,47 @@ void AutomationLogic::ApplyHealerBoons() {
         g_api->GameBinds.InvokeAsync(EGameBinds_MiscInteract, 50);
         Sleep(g_state.initialDelay);
 
-        if (g_state.isQuickDps) {
-            for (int i = 0; i < 10; i++) {
-                CoordinateUtils::ClickAtScaled(g_coords.healerStepX[i], g_coords.healerStepY[i], g_state.stepDelay);
+        bool alacrityCounted = false;
+        for (int i = 0; i < MenuSequences::HEALER_QUICK_LENGTH; i++) {
+            MenuOption step = MenuSequences::HEALER_QUICK_SEQUENCE[i];
+
+            if (g_state.isAlacDps && step == BOON_ALACRITY) {
+                if (!alacrityCounted) {
+                    auto quicknessCoord = g_coords.coords.find(BOON_QUICKNESS);
+                    if (quicknessCoord != g_coords.coords.end()) {
+                        CoordinateUtils::ClickAtScaled(
+                            quicknessCoord->second.first,
+                            quicknessCoord->second.second,
+                            g_state.stepDelay
+                        );
+                    }
+                    alacrityCounted = true;
+                }
+                continue;
             }
-        }
-        else if (g_state.isAlacDps) {
-            int alacStepY[9] = { 262, 352, 352, 305, 500, 450, 450, 305, 262 };
-            for (int i = 0; i < 9; i++) {
-                CoordinateUtils::ClickAtScaled(830, alacStepY[i], g_state.stepDelay);
+
+            auto coordIt = g_coords.coords.find(step);
+            if (coordIt != g_coords.coords.end()) {
+                CoordinateUtils::ClickAtScaled(
+                    coordIt->second.first,
+                    coordIt->second.second,
+                    g_state.stepDelay
+                );
             }
         }
 
-        int finalY;
+        MenuOption envDamageOption;
         switch (g_state.envDamageLevel) {
-        case ENV_MILD: finalY = 352; break;
-        case ENV_MODERATE: finalY = 305; break;
-        case ENV_EXTREME: finalY = 262; break;
-        default: finalY = 352; break;
+        case ENV_MILD: envDamageOption = BOON_ENV_MILD; break;
+        case ENV_MODERATE: envDamageOption = BOON_ENV_MODERATE; break;
+        case ENV_EXTREME: envDamageOption = BOON_ENV_EXTREME; break;
+        default: envDamageOption = BOON_ENV_MILD; break;
         }
 
-        CoordinateUtils::ClickAtScaled(830, finalY, 50);
+        auto envCoord = g_coords.coords.find(envDamageOption);
+        if (envCoord != g_coords.coords.end()) {
+            CoordinateUtils::ClickAtScaled(envCoord->second.first, envCoord->second.second, 50);
+        }
     }
     catch (...) {
         g_api->Log(ELogLevel_WARNING, "GolemHelper", "Exception during healer boon sequence");
@@ -104,7 +129,7 @@ void AutomationLogic::ApplyHealerBoons() {
     g_api->Log(ELogLevel_INFO, "GolemHelper", "Healer boon sequence completed!");
 }
 
-void AutomationLogic::ApplyAllBoons() {
+void AutomationLogic::ApplyBoons() {
     if (!g_api || !g_state.enabled) return;
 
     if (g_state.environmentDamage) {
@@ -142,31 +167,54 @@ void AutomationLogic::ApplyAllBoons() {
         g_api->GameBinds.InvokeAsync(EGameBinds_MiscInteract, 50);
         Sleep(g_state.initialDelay);
 
-        for (int i = 0; i < 20; i++) {
-            if (g_coords.boonStepX[i] == 0 && g_coords.boonStepY[i] == 0) {
+        for (int i = 0; i < MenuSequences::BOON_LENGTH; i++) {
+            int stepIndex = i;
+            MenuOption step = MenuSequences::BOON_SEQUENCE[i];
+            auto coordIt = g_coords.coords.find(step);
+
+            if (coordIt == g_coords.coords.end() ||
+                (coordIt->second.first == 0 && coordIt->second.second == 0)) {
                 continue;
             }
 
-            if (ShouldSkipBoonStep(i)) {
+            if (ShouldSkipBoonStep(stepIndex)) {
                 continue;
             }
 
-            if (i == 9) {
-                CoordinateUtils::ClickAtScaled(g_coords.boonStepX[i], g_coords.boonStepY[i], g_state.stepDelay);
+            if (step == BOON_RESOLUTION) {
+                CoordinateUtils::ClickAtScaled(
+                    coordIt->second.first,
+                    coordIt->second.second,
+                    g_state.stepDelay
+                );
 
                 if (g_state.showBoonAdvanced && g_state.addResistance) {
-                    CoordinateUtils::ClickAtScaled(g_coords.resistanceX, g_coords.resistanceY, g_state.stepDelay);
+                    auto resistanceCoord = g_coords.coords.find(BOON_RESISTANCE);
+                    if (resistanceCoord != g_coords.coords.end()) {
+                        CoordinateUtils::ClickAtScaled(
+                            resistanceCoord->second.first,
+                            resistanceCoord->second.second,
+                            g_state.stepDelay
+                        );
+                    }
                 }
 
                 if (g_state.showBoonAdvanced && g_state.addStability) {
-                    CoordinateUtils::ClickAtScaled(g_coords.stabilityX, g_coords.stabilityY, g_state.stepDelay);
+                    auto stabilityCoord = g_coords.coords.find(BOON_STABILITY);
+                    if (stabilityCoord != g_coords.coords.end()) {
+                        CoordinateUtils::ClickAtScaled(
+                            stabilityCoord->second.first,
+                            stabilityCoord->second.second,
+                            g_state.stepDelay
+                        );
+                    }
                 }
 
                 continue;
             }
 
-            int delay = (i == 19) ? 50 : g_state.stepDelay;
-            CoordinateUtils::ClickAtScaled(g_coords.boonStepX[i], g_coords.boonStepY[i], delay);
+            int delay = (i == MenuSequences::BOON_LENGTH - 1) ? 50 : g_state.stepDelay;
+            CoordinateUtils::ClickAtScaled(coordIt->second.first, coordIt->second.second, delay);
         }
     }
     catch (...) {
@@ -180,7 +228,7 @@ void AutomationLogic::ApplyAllBoons() {
     g_api->Log(ELogLevel_INFO, "GolemHelper", "Boon sequence completed!");
 }
 
-void AutomationLogic::ApplyGolemSettings() {
+void AutomationLogic::SpawnGolem() {
     if (!g_api || !g_state.enabled) return;
 
     bool uiWasVisible = g_state.showUI;
@@ -212,49 +260,70 @@ void AutomationLogic::ApplyGolemSettings() {
         g_api->GameBinds.InvokeAsync(EGameBinds_MiscInteract, 50);
         Sleep(g_state.initialDelay);
 
-        for (int i = 0; i < 25; i++) {
-            if (g_coords.golemStepX[i] == 0 && g_coords.golemStepY[i] == 0) {
+        for (int i = 0; i < MenuSequences::GOLEM_LENGTH; i++) {
+            int stepIndex = i;
+            MenuOption step = MenuSequences::GOLEM_SEQUENCE[i];
+            auto coordIt = g_coords.coords.find(step);
+
+            if (coordIt == g_coords.coords.end() ||
+                (coordIt->second.first == 0 && coordIt->second.second == 0)) {
                 continue;
             }
 
-            if (ShouldSkipGolemStep(i)) {
+            if (ShouldSkipGolemStep(stepIndex)) {
                 continue;
             }
 
-            int currentX = g_coords.golemStepX[i];
-            int currentY = g_coords.golemStepY[i];
+            int currentX = coordIt->second.first;
+            int currentY = coordIt->second.second;
 
-            if (i == 1) {
+            if (step == GOLEM_HITBOX_SMALL) {
+                MenuOption hitboxOption;
                 switch (g_state.hitboxType) {
-                case HITBOX_SMALL:
-                    currentY = 260;
-                    break;
-                case HITBOX_MEDIUM:
-                    currentY = 305;
-                    break;
-                case HITBOX_LARGE:
-                    currentY = 352;
-                    break;
+                case HITBOX_SMALL: hitboxOption = GOLEM_HITBOX_SMALL; break;
+                case HITBOX_MEDIUM: hitboxOption = GOLEM_HITBOX_MEDIUM; break;
+                case HITBOX_LARGE: hitboxOption = GOLEM_HITBOX_LARGE; break;
+                default: hitboxOption = GOLEM_HITBOX_SMALL; break;
+                }
+
+                auto hitboxCoord = g_coords.coords.find(hitboxOption);
+                if (hitboxCoord != g_coords.coords.end()) {
+                    currentX = hitboxCoord->second.first;
+                    currentY = hitboxCoord->second.second;
                 }
             }
 
-            int delay = (i == 24) ? 50 : g_state.stepDelay;
+            int delay = (i == MenuSequences::GOLEM_LENGTH - 1) ? 50 : g_state.stepDelay;
 
-            if (i == 14) {
+            if (step == GOLEM_CRIPPLE) {
                 CoordinateUtils::ClickAtScaled(currentX, currentY, delay);
 
                 if (g_state.showAdvanced && g_state.addImmobilize) {
-                    CoordinateUtils::ClickAtScaled(g_coords.immobilizeX, g_coords.immobilizeY, g_state.stepDelay);
+                    auto immobilizeCoord = g_coords.coords.find(GOLEM_IMMOBILIZE);
+                    if (immobilizeCoord != g_coords.coords.end()) {
+                        CoordinateUtils::ClickAtScaled(
+                            immobilizeCoord->second.first,
+                            immobilizeCoord->second.second,
+                            g_state.stepDelay
+                        );
+                    }
                 }
 
                 continue;
             }
 
-            if (i == 16) {
+            if (step == GOLEM_COMBATAFFECTINGCONDITIONS) {
                 CoordinateUtils::ClickAtScaled(currentX, currentY, delay);
 
                 if (g_state.showAdvanced && g_state.addBlind) {
-                    CoordinateUtils::ClickAtScaled(g_coords.blindX, g_coords.blindY, g_state.stepDelay);
+                    auto blindCoord = g_coords.coords.find(GOLEM_BLIND);
+                    if (blindCoord != g_coords.coords.end()) {
+                        CoordinateUtils::ClickAtScaled(
+                            blindCoord->second.first,
+                            blindCoord->second.second,
+                            g_state.stepDelay
+                        );
+                    }
                 }
 
                 continue;
@@ -262,7 +331,7 @@ void AutomationLogic::ApplyGolemSettings() {
 
             CoordinateUtils::ClickAtScaled(currentX, currentY, delay);
 
-            if (g_state.showAdvanced && g_state.fiveBleedingStacks && i == 6) {
+            if (g_state.showAdvanced && g_state.fiveBleedingStacks && step == GOLEM_BLEEDING) {
                 for (int repeat = 0; repeat < 4; repeat++) {
                     CoordinateUtils::ClickAtScaled(currentX, currentY, g_state.stepDelay);
                 }

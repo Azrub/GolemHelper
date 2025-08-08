@@ -4,7 +4,7 @@ class AutomationLogic {
 public:
     static bool ShouldSkipBoonStep(int stepIndex);
     static bool ShouldSkipGolemStep(int stepIndex);
-    static void ApplyAllBoons();
+    static void ApplyBoons();
     static void ApplyHealerBoons();
-    static void ApplyGolemSettings();
+    static void SpawnGolem();
 };

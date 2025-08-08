@@ -154,6 +154,7 @@
     <ClInclude Include="Automation\AutomationLogic.h" />
     <ClInclude Include="Automation\CoordinateUtils.h" />
     <ClInclude Include="Common\Globals.h" />
+    <ClInclude Include="Common\MenuSequences.h" />
     <ClInclude Include="Common\Types.h" />
     <ClInclude Include="Config\ConfigManager.h" />
     <ClInclude Include="Config\TemplateManager.h" />

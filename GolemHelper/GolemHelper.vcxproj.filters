@@ -108,6 +108,9 @@
     <ClInclude Include="Config\TemplateManager.h">
       <Filter>Config</Filter>
     </ClInclude>
+    <ClInclude Include="Common\MenuSequences.h">
+      <Filter>Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">

@@ -17,7 +17,7 @@ void UIManager::RenderUI() {
 
     if (ImGui::Begin("GolemHelper", &g_state.showUI, ImGuiWindowFlags_AlwaysAutoResize)) {
 
-        ImGui::TextColored(ImVec4(0.2f, 0.8f, 1.0f, 1.0f), "GolemHelper v1.5.0.0");
+        ImGui::TextColored(ImVec4(0.2f, 0.8f, 1.0f, 1.0f), "GolemHelper v1.5.1.0");
         ImGui::Separator();
 
         if (ImGui::BeginTabBar("GolemHelperTabs", ImGuiTabBarFlags_None)) {
@@ -164,7 +164,7 @@ void UIManager::RenderSettingsTab() {
 
     if (ImGui::Button("Spawn Golem", ImVec2(150, 0))) {
         if (g_state.enabled && MapUtils::IsInTrainingArea()) {
-            g_api->InputBinds.Invoke("GolemHelper.ApplyGolem", false);
+            g_api->InputBinds.Invoke("GolemHelper.SpawnGolem", false);
         }
     }
 
@@ -268,7 +268,7 @@ void UIManager::RenderTemplatesTab() {
 
     if (ImGui::Button("Spawn Golem", ImVec2(120, 30))) {
         if (g_state.enabled && MapUtils::IsInTrainingArea()) {
-            g_api->InputBinds.Invoke("GolemHelper.ApplyGolem", false);
+            g_api->InputBinds.Invoke("GolemHelper.SpawnGolem", false);
         }
     }
 
@@ -484,79 +484,12 @@ void UIManager::RenderOptions() {
         MapUtils::UpdateQuickAccessVisibility();
     }
 
-    ImGui::Checkbox("Enable debug mode", &g_state.debugMode);
+    bool oldAutoShowHideUI = g_state.autoShowHideUI;
+    ImGui::Checkbox("Auto Show/Hide UI", &g_state.autoShowHideUI);
 
-    if (ImGui::Button("Reset all settings")) {
-        g_state.isQuickDps = false;
-        g_state.isAlacDps = false;
-        g_state.environmentDamage = false;
-        g_state.envDamageLevel = ENV_MILD;
-        g_state.skipBurning = false;
-        g_state.skipConfusion = false;
-        g_state.skipSlow = false;
-        g_state.addImmobilize = false;
-        g_state.addBlind = false;
-        g_state.fiveBleedingStacks = false;
-        g_state.hitboxType = HITBOX_SMALL;
-        g_state.showAdvanced = false;
-        g_state.showTimingSettings = false;
-        g_state.showBoonAdvanced = false;
-        g_state.addResistance = false;
-        g_state.addStability = false;
-        g_state.skipAegis = false;
-        g_state.stepDelay = 290;
-        g_state.initialDelay = 390;
-        g_state.alwaysHideIcon = false;
-
+    if (oldAutoShowHideUI != g_state.autoShowHideUI) {
         ConfigManager::SaveCustomDelaySettings();
-        MapUtils::UpdateQuickAccessVisibility();
     }
 
-    ImGui::Spacing();
-    ImGui::Text("Current Modes:");
-
-    std::string boonMode = "Normal";
-    if (g_state.isQuickDps) {
-        boonMode = "Quick DPS";
-    }
-    else if (g_state.isAlacDps) {
-        boonMode = "Alac DPS";
-    }
-
-    if (g_state.environmentDamage) {
-        boonMode += " + Env ";
-        switch (g_state.envDamageLevel) {
-        case ENV_MILD: boonMode += "Mild"; break;
-        case ENV_MODERATE: boonMode += "Moderate"; break;
-        case ENV_EXTREME: boonMode += "Extreme"; break;
-        }
-    }
-
-    ImGui::Text("- Boons: %s", boonMode.c_str());
-
-    std::string golemMods = "Normal";
-    if (g_state.showAdvanced && (g_state.skipBurning || g_state.skipConfusion || g_state.skipSlow ||
-        g_state.addImmobilize || g_state.addBlind || g_state.fiveBleedingStacks)) {
-        golemMods = "";
-        if (g_state.skipBurning) golemMods += "Skip Burning ";
-        if (g_state.skipConfusion) golemMods += "Skip Confusion ";
-        if (g_state.skipSlow) golemMods += "Skip Slow ";
-        if (g_state.addImmobilize) golemMods += "Add Immobilize ";
-        if (g_state.addBlind) golemMods += "Add Blind ";
-        if (g_state.fiveBleedingStacks) golemMods += "5 Bleeding ";
-        if (!golemMods.empty()) golemMods.pop_back();
-    }
-    ImGui::Text("- Golem: %s", golemMods.c_str());
-
-    const char* hitboxName = g_state.hitboxType == HITBOX_SMALL ? "Small" :
-        g_state.hitboxType == HITBOX_MEDIUM ? "Medium" : "Large";
-    ImGui::Text("- Hitbox: %s", hitboxName);
-
-    ImGui::Text("- Step Delay: %d ms", g_state.stepDelay);
-    ImGui::Text("- Initial Delay: %d ms", g_state.initialDelay);
-
-    ImGui::Text("- Templates: %zu loaded", g_state.templates.size());
-    if (g_state.selectedTemplateIndex >= 0 && g_state.selectedTemplateIndex < g_state.templates.size()) {
-        ImGui::Text("- Active Template: %s", g_state.templates[g_state.selectedTemplateIndex].name.c_str());
-    }
+    ImGui::Checkbox("Enable debug mode", &g_state.debugMode);
 }

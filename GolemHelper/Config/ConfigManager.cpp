@@ -22,12 +22,15 @@ void ConfigManager::SaveCustomDelaySettings() {
         configFile << "initialDelay=" << g_state.initialDelay << std::endl;
         configFile << "stepDelay=" << g_state.stepDelay << std::endl;
         configFile << "alwaysHideIcon=" << (g_state.alwaysHideIcon ? "1" : "0") << std::endl;
+        configFile << "autoShowHideUI=" << (g_state.autoShowHideUI ? "1" : "0") << std::endl;
 
         configFile.close();
 
-        char logBuffer[300];
-        sprintf_s(logBuffer, "Settings saved: initialDelay=%dms, stepDelay=%dms, alwaysHideIcon=%s",
-            g_state.initialDelay, g_state.stepDelay, g_state.alwaysHideIcon ? "true" : "false");
+        char logBuffer[350];
+        sprintf_s(logBuffer, "Settings saved: initialDelay=%dms, stepDelay=%dms, alwaysHideIcon=%s, autoShowHideUI=%s",
+            g_state.initialDelay, g_state.stepDelay,
+            g_state.alwaysHideIcon ? "true" : "false",
+            g_state.autoShowHideUI ? "true" : "false");
         g_api->Log(ELogLevel_INFO, "GolemHelper", logBuffer);
 
     }
@@ -73,13 +76,18 @@ void ConfigManager::LoadCustomDelaySettings() {
             else if (key == "alwaysHideIcon") {
                 g_state.alwaysHideIcon = (value == "1");
             }
+            else if (key == "autoShowHideUI") {
+                g_state.autoShowHideUI = (value == "1");
+            }
         }
 
         configFile.close();
 
-        char logBuffer[300];
-        sprintf_s(logBuffer, "Settings loaded: initialDelay=%dms, stepDelay=%dms, alwaysHideIcon=%s",
-            g_state.initialDelay, g_state.stepDelay, g_state.alwaysHideIcon ? "true" : "false");
+        char logBuffer[350];
+        sprintf_s(logBuffer, "Settings loaded: initialDelay=%dms, stepDelay=%dms, alwaysHideIcon=%s, autoShowHideUI=%s",
+            g_state.initialDelay, g_state.stepDelay,
+            g_state.alwaysHideIcon ? "true" : "false",
+            g_state.autoShowHideUI ? "true" : "false");
         g_api->Log(ELogLevel_INFO, "GolemHelper", logBuffer);
 
     }
