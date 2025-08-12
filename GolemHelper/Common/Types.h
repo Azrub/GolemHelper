@@ -51,6 +51,7 @@ enum MenuOption {
     BOON_ENV_EXTREME,
 
     // === GOLEM MENU ===
+    GOLEM_RESPAWNMYPREVIOUSGOLEMINCARNATION,
     GOLEM_SPAWNAGOLEM,
     GOLEM_HITBOX_SMALL,
     GOLEM_HITBOX_MEDIUM,
@@ -79,7 +80,8 @@ enum MenuOption {
         GOLEM_WEAKNESS,
         GOLEM_GOBACK4,
         GOLEM_GOBACK5,
-        GOLEM_PLEASESPAWNMYGOLEM
+        GOLEM_PLEASESPAWNMYGOLEM,
+        GOLEM_EXIT
 };
 
 struct GolemTemplate {
@@ -193,6 +195,7 @@ struct MenuCoordinates {
             {BOON_ENV_EXTREME, {830, 262}},
 
             // === GOLEM MENU ===
+            {GOLEM_RESPAWNMYPREVIOUSGOLEMINCARNATION, {830, 352}},
             {GOLEM_SPAWNAGOLEM, {830, 260}},
             {GOLEM_HITBOX_SMALL, {830, 260}},
             {GOLEM_HITBOX_MEDIUM, {830, 305}},
@@ -221,6 +224,7 @@ struct MenuCoordinates {
                 {GOLEM_WEAKNESS, {830, 400}},
                 {GOLEM_GOBACK4, {830, 454}},
             {GOLEM_GOBACK5, {830, 454}},
-            {GOLEM_PLEASESPAWNMYGOLEM, {830, 548}}
+            {GOLEM_PLEASESPAWNMYGOLEM, {830, 548}},
+            {GOLEM_EXIT, {830, 400}},
     };
 };

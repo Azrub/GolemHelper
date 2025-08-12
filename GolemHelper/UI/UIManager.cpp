@@ -17,7 +17,7 @@ void UIManager::RenderUI() {
 
     if (ImGui::Begin("GolemHelper", &g_state.showUI, ImGuiWindowFlags_AlwaysAutoResize)) {
 
-        ImGui::TextColored(ImVec4(0.2f, 0.8f, 1.0f, 1.0f), "GolemHelper v1.5.1.0");
+        ImGui::TextColored(ImVec4(0.2f, 0.8f, 1.0f, 1.0f), "GolemHelper v1.5.2.0");
         ImGui::Separator();
 
         if (ImGui::BeginTabBar("GolemHelperTabs", ImGuiTabBarFlags_None)) {
@@ -162,9 +162,15 @@ void UIManager::RenderSettingsTab() {
 
     ImGui::Text("Golem Configuration");
 
-    if (ImGui::Button("Spawn Golem", ImVec2(150, 0))) {
+    if (ImGui::Button("Spawn Golem", ImVec2(120, 0))) {
         if (g_state.enabled && MapUtils::IsInTrainingArea()) {
             g_api->InputBinds.Invoke("GolemHelper.SpawnGolem", false);
+        }
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Respawn", ImVec2(80, 0))) {
+        if (g_state.enabled && MapUtils::IsInTrainingArea()) {
+            g_api->InputBinds.Invoke("GolemHelper.RespawnGolem", false);
         }
     }
 

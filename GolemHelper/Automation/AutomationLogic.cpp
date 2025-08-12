@@ -348,3 +348,41 @@ void AutomationLogic::SpawnGolem() {
 
     g_api->Log(ELogLevel_INFO, "GolemHelper", "Golem settings sequence completed (25 steps)!");
 }
+
+void AutomationLogic::RespawnGolem() {
+    if (!g_api || !g_state.enabled) return;
+
+    bool uiWasVisible = g_state.showUI;
+    if (uiWasVisible) {
+        g_state.showUI = false;
+    }
+
+    g_api->Log(ELogLevel_INFO, "GolemHelper", "Starting golem respawn sequence (2 steps)");
+
+    try {
+        g_api->GameBinds.InvokeAsync(EGameBinds_MiscInteract, 50);
+        Sleep(g_state.initialDelay);
+
+        for (int i = 0; i < MenuSequences::GOLEM_RESPAWN_LENGTH; i++) {
+            MenuOption step = MenuSequences::GOLEM_RESPAWN[i];
+            auto coordIt = g_coords.coords.find(step);
+
+            if (coordIt == g_coords.coords.end() ||
+                (coordIt->second.first == 0 && coordIt->second.second == 0)) {
+                continue;
+            }
+
+            int delay = (i == MenuSequences::GOLEM_RESPAWN_LENGTH - 1) ? 50 : g_state.stepDelay;
+            CoordinateUtils::ClickAtScaled(coordIt->second.first, coordIt->second.second, delay);
+        }
+    }
+    catch (...) {
+        g_api->Log(ELogLevel_WARNING, "GolemHelper", "Exception during golem respawn sequence");
+    }
+
+    if (uiWasVisible) {
+        g_state.showUI = true;
+    }
+
+    g_api->Log(ELogLevel_INFO, "GolemHelper", "Golem respawn sequence completed!");
+}

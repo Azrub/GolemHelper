@@ -7,4 +7,5 @@ public:
     static void ApplyBoons();
     static void ApplyHealerBoons();
     static void SpawnGolem();
+    static void RespawnGolem();
 };
