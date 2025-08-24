@@ -56,6 +56,28 @@ void CoordinateUtils::GetScaledCoordinates(int baseX, int baseY, int* scaledX, i
                 g_api->Log(ELogLevel_INFO, "GolemHelper", "ULTRAWIDE 3440x1440: APPLIED NORMAL UI OFFSET");
             }
         }
+        else if (g_nexusLink->Width == 3840 && g_nexusLink->Height == 2160) {
+            if (uiScale >= 0.89f && uiScale <= 0.91f) {
+                dpiScaleX = 2.052f;
+                dpiScaleY = 0.908f;
+                g_api->Log(ELogLevel_INFO, "GolemHelper", "4K 3840x2160: APPLIED SMALL UI OFFSET");
+            }
+            else if (uiScale >= 1.09f && uiScale <= 1.15f) {
+                dpiScaleX = 1.985f;
+                dpiScaleY = 1.130f;
+                g_api->Log(ELogLevel_INFO, "GolemHelper", "4K 3840x2160: APPLIED LARGE UI OFFSET");
+            }
+            else if (uiScale >= 1.21f && uiScale <= 1.25f) {
+                dpiScaleX = 1.952f;
+                dpiScaleY = 1.233f;
+                g_api->Log(ELogLevel_INFO, "GolemHelper", "4K 3840x2160: APPLIED LARGER UI OFFSET");
+            }
+            else {
+                dpiScaleX = 2.0f;
+                dpiScaleY = 1.0f;
+                g_api->Log(ELogLevel_INFO, "GolemHelper", "4K 3840x2160: APPLIED NORMAL UI OFFSET");
+            }
+        }
         else {
             dpiScaleX = (float)g_nexusLink->Width / 1920.0f;
             dpiScaleY = 1.0f;
@@ -73,7 +95,8 @@ void CoordinateUtils::GetScaledCoordinates(int baseX, int baseY, int* scaledX, i
         int finalY = scaledForResolutionY;
 
         if (!(g_nexusLink->Width == 5120 && g_nexusLink->Height == 1440) &&
-            !(g_nexusLink->Width == 3440 && g_nexusLink->Height == 1440)) {
+            !(g_nexusLink->Width == 3440 && g_nexusLink->Height == 1440) &&
+            !(g_nexusLink->Width == 3840 && g_nexusLink->Height == 2160)) {
             if (uiScale >= 0.89f && uiScale <= 0.91f) {
                 finalX = scaledForResolutionX - (int)(scaledForResolutionX * 0.029f);
                 finalY = scaledForResolutionY - (int)(scaledForResolutionY * 0.103f);

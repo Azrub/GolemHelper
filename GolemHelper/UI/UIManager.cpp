@@ -17,7 +17,7 @@ void UIManager::RenderUI() {
 
     if (ImGui::Begin("GolemHelper", &g_state.showUI, ImGuiWindowFlags_AlwaysAutoResize)) {
 
-        ImGui::TextColored(ImVec4(0.2f, 0.8f, 1.0f, 1.0f), "GolemHelper v1.5.2.0");
+        ImGui::TextColored(ImVec4(0.2f, 0.8f, 1.0f, 1.0f), "GolemHelper v1.5.3.0");
         ImGui::Separator();
 
         if (ImGui::BeginTabBar("GolemHelperTabs", ImGuiTabBarFlags_None)) {
