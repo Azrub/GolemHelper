@@ -386,3 +386,42 @@ void AutomationLogic::RespawnGolem() {
 
     g_api->Log(ELogLevel_INFO, "GolemHelper", "Golem respawn sequence completed!");
 }
+
+void AutomationLogic::RemoveAndRespawnGolem()
+{
+    if (!g_api || !g_state.enabled) return;
+
+    bool uiWasVisible = g_state.showUI;
+    if (uiWasVisible) {
+        g_state.showUI = false;
+    }
+
+    g_api->Log(ELogLevel_INFO, "GolemHelper", "Starting golem remove and respawn sequence (3 steps)");
+
+    try {
+        g_api->GameBinds.InvokeAsync(EGameBinds_MiscInteract, 50);
+        Sleep(g_state.initialDelay);
+
+        for (int i = 0; i < MenuSequences::GOLEM_REMOVE_AND_RESPAWN_LENGTH; i++) {
+            MenuOption step = MenuSequences::GOLEM_REMOVE_AND_RESPAWN[i];
+            auto coordIt = g_coords.coords.find(step);
+
+            if (coordIt == g_coords.coords.end() ||
+                (coordIt->second.first == 0 && coordIt->second.second == 0)) {
+                continue;
+                }
+
+            int delay = (i == MenuSequences::GOLEM_REMOVE_AND_RESPAWN_LENGTH - 1) ? 50 : g_state.stepDelay;
+            CoordinateUtils::ClickAtScaled(coordIt->second.first, coordIt->second.second, delay);
+        }
+    }
+    catch (...) {
+        g_api->Log(ELogLevel_WARNING, "GolemHelper", "Exception during golem remove and respawn sequence");
+    }
+
+    if (uiWasVisible) {
+        g_state.showUI = true;
+    }
+
+    g_api->Log(ELogLevel_INFO, "GolemHelper", "Golem remove and respawn sequence completed!");
+}

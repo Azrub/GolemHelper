@@ -12,6 +12,7 @@ void KeybindManager::RegisterKeybinds() {
     g_api->InputBinds.RegisterWithStruct("GolemHelper.ApplyBoons", HandleBoonKeybind, kb_empty);
     g_api->InputBinds.RegisterWithStruct("GolemHelper.SpawnGolem", HandleGolemKeybind, kb_empty);
     g_api->InputBinds.RegisterWithStruct("GolemHelper.RespawnGolem", HandleRespawnGolemKeybind, kb_empty);
+    g_api->InputBinds.RegisterWithStruct("GolemHelper.RemoveAndRespawnGolem", HandleRemoveAndRespawnGolemKeybind, kb_empty);
     g_api->InputBinds.RegisterWithStruct("GolemHelper.QuickDPS", HandleQuickDpsKeybind, kb_empty);
     g_api->InputBinds.RegisterWithStruct("GolemHelper.AlacDPS", HandleAlacDpsKeybind, kb_empty);
     g_api->InputBinds.RegisterWithStruct("GolemHelper.Toggle", HandleToggleKeybind, kb_empty);
@@ -25,6 +26,7 @@ void KeybindManager::UnregisterKeybinds() {
     g_api->InputBinds.Deregister("GolemHelper.ApplyBoons");
     g_api->InputBinds.Deregister("GolemHelper.SpawnGolem");
     g_api->InputBinds.Deregister("GolemHelper.RespawnGolem");
+    g_api->InputBinds.Deregister("GolemHelper.RemoveAndRespawnGolem"); 
     g_api->InputBinds.Deregister("GolemHelper.QuickDPS");
     g_api->InputBinds.Deregister("GolemHelper.AlacDPS");
     g_api->InputBinds.Deregister("GolemHelper.Toggle");
@@ -47,6 +49,12 @@ void KeybindManager::HandleGolemKeybind(const char* id, bool release) {
 void KeybindManager::HandleRespawnGolemKeybind(const char* id, bool release) {
     if (!release && g_state.enabled) {
         AutomationLogic::RespawnGolem();
+    }
+}
+
+void KeybindManager::HandleRemoveAndRespawnGolemKeybind(const char* id, bool release) {
+    if (!release && g_state.enabled) {
+        AutomationLogic::RemoveAndRespawnGolem();
     }
 }
 

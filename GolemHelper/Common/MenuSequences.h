@@ -72,8 +72,15 @@ public:
         GOLEM_EXIT
     };
 
+    static constexpr MenuOption GOLEM_REMOVE_AND_RESPAWN[3] = {
+        GOLEM_REMOVEGOLEM,
+        GOLEM_RESPAWNMYPREVIOUSGOLEMINCARNATION,
+        GOLEM_EXIT
+    };
+
     static constexpr int BOON_LENGTH = 20;
     static constexpr int HEALER_QUICK_LENGTH = 10;
     static constexpr int GOLEM_LENGTH = 25;
     static constexpr int GOLEM_RESPAWN_LENGTH = 2;
+    static constexpr int GOLEM_REMOVE_AND_RESPAWN_LENGTH = 3;
 };
