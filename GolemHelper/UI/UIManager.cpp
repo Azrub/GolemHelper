@@ -173,6 +173,11 @@ void UIManager::RenderSettingsTab() {
             g_api->InputBinds.Invoke("GolemHelper.RespawnGolem", false);
         }
     }
+    if (ImGui::Button("Remove and Respawn", ImVec2(150, 0))) {
+        if (g_state.enabled && MapUtils::IsInTrainingArea()) {
+            g_api->InputBinds.Invoke("GolemHelper.RemoveAndRespawnGolem", false);
+        }
+    }
 
     ImGui::Text("Golem Hitbox:");
 

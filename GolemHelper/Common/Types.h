@@ -52,6 +52,7 @@ enum MenuOption {
 
     // === GOLEM MENU ===
     GOLEM_RESPAWNMYPREVIOUSGOLEMINCARNATION,
+    GOLEM_REMOVEGOLEM,
     GOLEM_SPAWNAGOLEM,
     GOLEM_HITBOX_SMALL,
     GOLEM_HITBOX_MEDIUM,
@@ -196,6 +197,7 @@ struct MenuCoordinates {
 
             // === GOLEM MENU ===
             {GOLEM_RESPAWNMYPREVIOUSGOLEMINCARNATION, {830, 352}},
+            {GOLEM_REMOVEGOLEM, {830, 306}},
             {GOLEM_SPAWNAGOLEM, {830, 260}},
             {GOLEM_HITBOX_SMALL, {830, 260}},
             {GOLEM_HITBOX_MEDIUM, {830, 305}},

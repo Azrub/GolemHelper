@@ -8,4 +8,5 @@ public:
     static void ApplyHealerBoons();
     static void SpawnGolem();
     static void RespawnGolem();
+    static void RemoveAndRespawnGolem();
 };
