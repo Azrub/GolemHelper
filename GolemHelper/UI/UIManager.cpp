@@ -17,7 +17,7 @@ void UIManager::RenderUI() {
 
     if (ImGui::Begin("GolemHelper", &g_state.showUI, ImGuiWindowFlags_AlwaysAutoResize)) {
 
-        ImGui::TextColored(ImVec4(0.2f, 0.8f, 1.0f, 1.0f), "GolemHelper v1.5.3.0");
+        ImGui::TextColored(ImVec4(0.2f, 0.8f, 1.0f, 1.0f), "GolemHelper v1.6.0.0");
         ImGui::Separator();
 
         if (ImGui::BeginTabBar("GolemHelperTabs", ImGuiTabBarFlags_None)) {
@@ -82,7 +82,7 @@ void UIManager::RenderUI() {
 void UIManager::RenderSettingsTab() {
     ImGui::Text("Boon Configuration");
 
-    if (ImGui::Button("Apply Boons", ImVec2(150, 0))) {
+    if (ImGui::Button("Apply Boons", ImVec2(130, 0))) {
         if (g_state.enabled && MapUtils::IsInTrainingArea()) {
             g_api->InputBinds.Invoke("GolemHelper.ApplyBoons", false);
         }
@@ -162,17 +162,20 @@ void UIManager::RenderSettingsTab() {
 
     ImGui::Text("Golem Configuration");
 
-    if (ImGui::Button("Spawn Golem", ImVec2(120, 0))) {
+    if (ImGui::Button("Spawn Golem", ImVec2(110, 0))) {
         if (g_state.enabled && MapUtils::IsInTrainingArea()) {
             g_api->InputBinds.Invoke("GolemHelper.SpawnGolem", false);
         }
     }
-    ImGui::SameLine();
+    ImGui::SameLine(0, 5);
     if (ImGui::Button("Respawn", ImVec2(80, 0))) {
         if (g_state.enabled && MapUtils::IsInTrainingArea()) {
             g_api->InputBinds.Invoke("GolemHelper.RespawnGolem", false);
         }
     }
+
+    ImGui::Spacing();
+
     if (ImGui::Button("Remove and Respawn", ImVec2(150, 0))) {
         if (g_state.enabled && MapUtils::IsInTrainingArea()) {
             g_api->InputBinds.Invoke("GolemHelper.RemoveAndRespawnGolem", false);
@@ -238,22 +241,22 @@ void UIManager::RenderSettingsTab() {
         int oldInitialDelay = g_state.initialDelay;
 
         ImGui::Text("Initial Delay (after F key):");
-        ImGui::SetNextItemWidth(205);
+        ImGui::SetNextItemWidth(200);
         ImGui::SliderInt("##initial", &g_state.initialDelay, 100, 1000, "%d ms");
 
         ImGui::Text("Step Delay (between clicks):");
-        ImGui::SetNextItemWidth(205);
+        ImGui::SetNextItemWidth(200);
         ImGui::SliderInt("##step", &g_state.stepDelay, 100, 1000, "%d ms");
 
         ImGui::Spacing();
 
-        if (ImGui::Button("Reset to Default", ImVec2(120, 0))) {
+        if (ImGui::Button("Reset to Default", ImVec2(117, 0))) {
             g_state.stepDelay = 290;
             g_state.initialDelay = 390;
             ConfigManager::SaveCustomDelaySettings();
         }
-        ImGui::SameLine();
-        if (ImGui::Button("Slow Mode", ImVec2(80, 0))) {
+        ImGui::SameLine(0, 5);
+        if (ImGui::Button("Slow Mode", ImVec2(78, 0))) {
             g_state.stepDelay = 1000;
             g_state.initialDelay = 600;
             ConfigManager::SaveCustomDelaySettings();
@@ -267,24 +270,97 @@ void UIManager::RenderSettingsTab() {
         }
     }
     ImGui::PopStyleColor(2);
+
+    if (g_state.alwaysLoadLastSettings) {
+        static bool lastIsQuickDps = g_state.isQuickDps;
+        static bool lastIsAlacDps = g_state.isAlacDps;
+        static bool lastEnvironmentDamage = g_state.environmentDamage;
+        static EnvironmentDamageLevel lastEnvDamageLevel = g_state.envDamageLevel;
+        static bool lastSkipBurning = g_state.skipBurning;
+        static bool lastSkipConfusion = g_state.skipConfusion;
+        static bool lastSkipSlow = g_state.skipSlow;
+        static bool lastAddImmobilize = g_state.addImmobilize;
+        static bool lastAddBlind = g_state.addBlind;
+        static bool lastFiveBleedingStacks = g_state.fiveBleedingStacks;
+        static HitboxType lastHitboxType = g_state.hitboxType;
+        static bool lastAddResistance = g_state.addResistance;
+        static bool lastAddStability = g_state.addStability;
+        static bool lastSkipAegis = g_state.skipAegis;
+        static bool lastShowBoonAdvanced = g_state.showBoonAdvanced;
+        static bool lastShowAdvanced = g_state.showAdvanced;
+
+        if (lastIsQuickDps != g_state.isQuickDps ||
+            lastIsAlacDps != g_state.isAlacDps ||
+            lastEnvironmentDamage != g_state.environmentDamage ||
+            lastEnvDamageLevel != g_state.envDamageLevel ||
+            lastSkipBurning != g_state.skipBurning ||
+            lastSkipConfusion != g_state.skipConfusion ||
+            lastSkipSlow != g_state.skipSlow ||
+            lastAddImmobilize != g_state.addImmobilize ||
+            lastAddBlind != g_state.addBlind ||
+            lastFiveBleedingStacks != g_state.fiveBleedingStacks ||
+            lastHitboxType != g_state.hitboxType ||
+            lastAddResistance != g_state.addResistance ||
+            lastAddStability != g_state.addStability ||
+            lastSkipAegis != g_state.skipAegis ||
+            lastShowBoonAdvanced != g_state.showBoonAdvanced ||
+            lastShowAdvanced != g_state.showAdvanced) {
+
+            ConfigManager::SaveLastUsedSettings();
+
+            lastIsQuickDps = g_state.isQuickDps;
+            lastIsAlacDps = g_state.isAlacDps;
+            lastEnvironmentDamage = g_state.environmentDamage;
+            lastEnvDamageLevel = g_state.envDamageLevel;
+            lastSkipBurning = g_state.skipBurning;
+            lastSkipConfusion = g_state.skipConfusion;
+            lastSkipSlow = g_state.skipSlow;
+            lastAddImmobilize = g_state.addImmobilize;
+            lastAddBlind = g_state.addBlind;
+            lastFiveBleedingStacks = g_state.fiveBleedingStacks;
+            lastHitboxType = g_state.hitboxType;
+            lastAddResistance = g_state.addResistance;
+            lastAddStability = g_state.addStability;
+            lastSkipAegis = g_state.skipAegis;
+            lastShowBoonAdvanced = g_state.showBoonAdvanced;
+            lastShowAdvanced = g_state.showAdvanced;
+        }
+    }
 }
 
 void UIManager::RenderTemplatesTab() {
-    if (ImGui::Button("Apply Boons", ImVec2(120, 30))) {
+    ImGui::Spacing();
+
+    if (ImGui::Button("Apply Boons", ImVec2(110, 0))) {
         if (g_state.enabled && MapUtils::IsInTrainingArea()) {
             g_api->InputBinds.Invoke("GolemHelper.ApplyBoons", false);
         }
     }
-    ImGui::SameLine();
-
-    if (ImGui::Button("Spawn Golem", ImVec2(120, 30))) {
+    ImGui::SameLine(0, 5);
+    if (ImGui::Button("Spawn Golem", ImVec2(110, 0))) {
         if (g_state.enabled && MapUtils::IsInTrainingArea()) {
             g_api->InputBinds.Invoke("GolemHelper.SpawnGolem", false);
         }
     }
 
     ImGui::Spacing();
+
+    if (ImGui::Button("Respawn", ImVec2(110, 0))) {
+        if (g_state.enabled && MapUtils::IsInTrainingArea()) {
+            g_api->InputBinds.Invoke("GolemHelper.RespawnGolem", false);
+        }
+    }
+    ImGui::SameLine(0, 5);
+    if (ImGui::Button("Remove and Respawn", ImVec2(150, 0))) {
+        if (g_state.enabled && MapUtils::IsInTrainingArea()) {
+            g_api->InputBinds.Invoke("GolemHelper.RemoveAndRespawnGolem", false);
+        }
+    }
+
+    ImGui::Spacing();
+    ImGui::Spacing();
     ImGui::Separator();
+    ImGui::Spacing();
 
     ImGui::Text("Template Management");
     ImGui::Separator();
@@ -292,7 +368,7 @@ void UIManager::RenderTemplatesTab() {
     ImGui::Text("Save Current Settings:");
     ImGui::SetNextItemWidth(170);
     ImGui::InputText("##templateName", g_state.newTemplateName, sizeof(g_state.newTemplateName));
-    ImGui::SameLine();
+    ImGui::SameLine(0, 5);
 
     if (ImGui::Button("Save", ImVec2(50, 0))) {
         if (strlen(g_state.newTemplateName) > 0) {
@@ -336,14 +412,14 @@ void UIManager::RenderTemplatesTab() {
             g_state.lastUserTemplateIndex = userTemplateIndices[currentUserIndex];
         }
 
-        ImGui::SameLine();
+        ImGui::SameLine(0, 5);
         if (ImGui::Button("Load", ImVec2(50, 0))) {
             if (currentUserIndex >= 0 && currentUserIndex < userTemplateIndices.size()) {
                 TemplateManager::LoadTemplate(userTemplateIndices[currentUserIndex]);
             }
         }
 
-        ImGui::SameLine();
+        ImGui::SameLine(0, 5);
         if (ImGui::Button("Del", ImVec2(50, 0))) {
             if (currentUserIndex >= 0 && currentUserIndex < userTemplateIndices.size()) {
                 TemplateManager::DeleteTemplate(userTemplateIndices[currentUserIndex]);
@@ -459,9 +535,11 @@ void UIManager::RenderTemplatesTab() {
                 TemplateManager::LoadTemplate(templateIndex);
                 g_state.selectedTemplateIndex = -1;
             }
-            if (i < 2) ImGui::SameLine();
+            if (i < 2) ImGui::SameLine(0, 5);;
         }
     }
+
+    ImGui::Spacing();
 
     for (int i = 3; i < 5; i++) {
         const std::string& name = defaultNames[i];
@@ -478,7 +556,7 @@ void UIManager::RenderTemplatesTab() {
                 TemplateManager::LoadTemplate(templateIndex);
                 g_state.selectedTemplateIndex = -1;
             }
-            if (i == 3) ImGui::SameLine();
+            if (i == 3) ImGui::SameLine(0, 5);;
         }
     }
 }
@@ -499,6 +577,13 @@ void UIManager::RenderOptions() {
     ImGui::Checkbox("Auto Show/Hide UI", &g_state.autoShowHideUI);
 
     if (oldAutoShowHideUI != g_state.autoShowHideUI) {
+        ConfigManager::SaveCustomDelaySettings();
+    }
+
+    bool oldAlwaysLoadLastSettings = g_state.alwaysLoadLastSettings;
+    ImGui::Checkbox("Always Load Last Settings", &g_state.alwaysLoadLastSettings);
+
+    if (oldAlwaysLoadLastSettings != g_state.alwaysLoadLastSettings) {
         ConfigManager::SaveCustomDelaySettings();
     }
 

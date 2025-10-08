@@ -146,6 +146,7 @@ struct GolemHelperState {
     bool skipAegis = false;
     bool alwaysHideIcon = false;
     bool autoShowHideUI = false;
+    bool alwaysLoadLastSettings = false;
     int debugCounter = 0;
 
     int initialDelay = 390;
